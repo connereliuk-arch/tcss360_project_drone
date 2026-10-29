@@ -14,7 +14,7 @@ public class AnomalyDetector {
 
     AnomalyDetector() {
         myLowBatteryThreshold = 15; // percent
-        myMaxAltitudeDrop = 20; // meters
+        myMaxAltitudeDrop = 10; // meters
         myMaxTurnAngle = 45; // degrees
         myMaxSpeedChange = 20; // mph
     }
@@ -30,5 +30,10 @@ public class AnomalyDetector {
 
     public boolean checkLowBattery(final TelemetryData theData) {
         return theData.getBatteryLevel() <= myLowBatteryThreshold;
+    }
+
+    public boolean checkAltitudeDrop(final TelemetryData thePrevious,
+                                     final TelemetryData theCurrent) {
+        return Math.abs(thePrevious.getAltitude() - theCurrent.getAltitude()) >= myMaxAltitudeDrop;
     }
 }
