@@ -5,20 +5,27 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class AnomalyDetector {
-    private double myLowBatteryThreshold;
+    /**
+     * Lower battery percent limit
+     */
+    private static final double LOW_BATTERY_THRESHOLD = 15;
 
-    private double myMaxAltitudeChange;
+    /**
+     * Max altitude change in meters
+     */
+    private static final double MAX_ALTITUDE_CHANGE = 10;
 
-    private double myMaxTurnAngle;
+    /**
+     * Max turn angle in degrees
+     */
+    private static final double MAX_TURN_ANGLE = 45;
 
-    private double myMaxSpeedChange;
+    /**
+     * Max speed change in mph
+     */
+    private static final double MAX_SPEED_CHANGE = 20;
 
-    public AnomalyDetector() {
-        myLowBatteryThreshold = 15; // percent
-        myMaxAltitudeChange = 10; // meters
-        myMaxTurnAngle = 45; // degrees
-        myMaxSpeedChange = 20; // mph
-    }
+    public AnomalyDetector() { }
 
     public List<AnomalyRecord> detectAnomalies(final TelemetryData thePrevious,
                                                       final TelemetryData theCurrent,
@@ -29,7 +36,7 @@ public class AnomalyDetector {
         // Check if battery is low
         if (checkLowBattery(theCurrent)) {
             final String anomalyType = "LOW_BATTERY";
-            final String details = "Battery has depleted below " + myLowBatteryThreshold + "%. Current battery level: "
+            final String details = "Battery has depleted below " + LOW_BATTERY_THRESHOLD + "%. Current battery level: "
                                     + theCurrent.getBatteryLevel();
 
             records.add(new AnomalyRecord(theDroneId, theCurrent, timestamp, anomalyType, details));
@@ -57,17 +64,17 @@ public class AnomalyDetector {
     }
 
     public boolean checkLowBattery(final TelemetryData theData) {
-        return theData.getBatteryLevel() <= myLowBatteryThreshold;
+        return theData.getBatteryLevel() <= LOW_BATTERY_THRESHOLD;
     }
 
     public boolean checkAltitudeChange(final TelemetryData thePrevious,
                                      final TelemetryData theCurrent) {
-        return Math.abs(thePrevious.getAltitude() - theCurrent.getAltitude()) >= myMaxAltitudeChange;
+        return Math.abs(thePrevious.getAltitude() - theCurrent.getAltitude()) >= MAX_ALTITUDE_CHANGE;
     }
 
     // Returns true when speed changed by 20 mph or more
     public boolean checkSpeedChange(final TelemetryData thePrevious,
                                      final TelemetryData theCurrent) {
-        return Math.abs(thePrevious.getSpeed() - theCurrent.getSpeed()) >= myMaxSpeedChange;
+        return Math.abs(thePrevious.getSpeed() - theCurrent.getSpeed()) >= MAX_SPEED_CHANGE;
     }
 }
