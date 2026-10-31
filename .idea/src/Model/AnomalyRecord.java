@@ -27,6 +27,8 @@ public class AnomalyRecord {
 
     public String getDroneId() { return myDroneId; }
 
+    public TelemetryData getData() { return myData; }
+
     public LocalDateTime getTimestamp() { return myTimeStamp; }
 
     public String getAnomalyType() { return myAnomalyType; }
