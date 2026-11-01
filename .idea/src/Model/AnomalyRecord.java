@@ -21,15 +21,15 @@ import java.time.LocalDateTime;
  * @see AnomalyDetector
  */
 public class AnomalyRecord {
-    final String myDroneId;
+    private final String myDroneId;
 
-    final TelemetryData myData;
+    private final TelemetryData myData;
 
-    final LocalDateTime myTimeStamp;
+    private final LocalDateTime myTimeStamp;
 
-    final String myAnomalyType;
+    private final String myAnomalyType;
 
-    final String myDetails;
+    private final String myDetails;
 
 
     /**
