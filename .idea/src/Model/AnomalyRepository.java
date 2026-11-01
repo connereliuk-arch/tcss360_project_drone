@@ -26,8 +26,8 @@ public class AnomalyRepository {
 
     }
 
-    public void close() {
-
+    public void close() throws SQLException {
+        myDatabase.close();
     }
 
 }
