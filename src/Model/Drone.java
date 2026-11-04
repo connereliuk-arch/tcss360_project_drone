@@ -17,6 +17,7 @@ public class Drone {
     /** This drone's current telemetry. */
     private TelemetryData telemetry;
 
+
     public Drone(final String droneId) {
         this.droneId = droneId;
         this.telemetry = new TelemetryData(START_SPEED, START_ALTITUDE,

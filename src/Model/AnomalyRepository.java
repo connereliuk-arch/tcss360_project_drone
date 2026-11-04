@@ -77,7 +77,8 @@ public class AnomalyRepository {
                 items.getDouble("gps_latitude"),
                 items.getDouble("gps_longitude"),
                 items.getDouble("orientation"),
-                items.getDouble("battery_level")
+                items.getDouble("battery_level"),
+                LocalDateTime.now()
             );
 
             anomalies.add(new AnomalyRecord(

@@ -50,7 +50,7 @@ public class DroneMonitorController {
         DashBoard = new MonitorDashboard();
         // This is AWFUL and I am hardcoding it to have 3 drones that are instantiated in DroneMonitor's constructor
         // I am ashamed of myself.
-        drones = new Drone[]{new Drone(), new Drone(), new Drone()};
+        drones = new Drone[]{new Drone("01"), new Drone("02"), new Drone("03")};
         TeleGen = new TelemetryGenerator(); // According to trace in document, this will be instantiated with random
         AnomDetector = new AnomalyDetector();
         // Initialize random to be used for random change and value generation
@@ -64,10 +64,10 @@ public class DroneMonitorController {
     private Map<String, TelemetryData> updateAllDrones(Drone[] theDrones) {
         Map<String, TelemetryData> dronesData = new HashMap<>();
         for (Drone drone : theDrones) {
-            String droneName = drone.getID;
-            TelemetryData OldData = drone.getData;
-            TelemetryData NewData = theTelGen.generateTelemetry(OldData);
-            done.updateTelemetry(NewData);
+            String droneName = drone.getDroneId();
+            TelemetryData OldData = drone.getData();
+            TelemetryData NewData = TeleGen.generateTelemetry(OldData);
+            drone.updateTelemetry(NewData);
             // Random chance for GPS spoofing
             if (random.nextInt(100) + 1 > 85) {
                 // Here we would create a modified copy of NewData but with innacurate GPS data, and set NewData to refer to that
@@ -75,6 +75,7 @@ public class DroneMonitorController {
 
             dronesData.put(droneName, NewData);
         }
+        return null;
     }
 
 }

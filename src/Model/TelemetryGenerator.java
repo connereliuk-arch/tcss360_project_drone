@@ -6,7 +6,11 @@ import java.util.Random;
 public class TelemetryGenerator {
 
     /** Shared Random passed in from the controller. */
-    private final Random random;
+    private Random random;
+
+    public TelemetryGenerator() {
+        random = new Random();
+    }
 
     public TelemetryGenerator(final Random random) {
         this.random = random;
