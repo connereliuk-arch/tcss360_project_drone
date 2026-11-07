@@ -36,6 +36,11 @@ public class AnomalyDetector {
     private static final double MAX_ALTITUDE_CHANGE = 10;
 
     /**
+     * Highest a drone can fly in meters
+     */
+    private static final double MAX_ALTITUDE = 120;
+
+    /**
      * Max turn angle in degrees
      */
     private static final double MAX_TURN_ANGLE = 45;
