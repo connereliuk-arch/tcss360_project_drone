@@ -147,9 +147,39 @@ public class AnomalyDetector {
         return Math.abs(thePrevious.getSpeed() - theCurrent.getSpeed()) >= MAX_SPEED_CHANGE;
     }
 
-    public boolean checkGpsChange(final TelemetryData thePrevious,
+    /**
+     * Calculates the distance between two GPS coordinates using the Haversine formula
+     *
+     * @param thePrevious the drone's previous telemetry data
+     * @param theCurrent the drone's current telemetry data
+     * @return the distance between two points
+     */
+    public double calculateDistance(final TelemetryData thePrevious,
                                   final TelemetryData theCurrent) {
+        double lat1 = thePrevious.getLatitude();
+        double lon1 = thePrevious.getLongitude();
+        double lat2 = theCurrent.getLatitude();
+        double lon2 = theCurrent.getLongitude();
 
+        // Convert degrees to radians
+        lat1 = Math.toRadians(lat1);
+        lon1 = Math.toRadians(lon1);
+        lat2 = Math.toRadians(lat2);
+        lon2 = Math.toRadians(lon2);
+
+        // Calculate differences
+        double deltaLat = lat2 - lat1;
+        double deltaLon = lon2 - lon1;
+
+        // Haversine formula
+        double a = Math.min(1.0, Math.sin(deltaLat / 2) * Math.sin(deltaLat / 2)
+                + Math.cos(lat1) * Math.cos(lat2)
+                * Math.sin(deltaLon / 2) * Math.sin(deltaLon / 2));
+
+        // Calculate distance in meters
+        double earthRadius = 6371000;
+
+        return 2 * earthRadius * Math.asin(Math.sqrt(a));
 
     }
 }
