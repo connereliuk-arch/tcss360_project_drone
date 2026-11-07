@@ -45,6 +45,11 @@ public class AnomalyDetector {
      */
     private static final double MAX_SPEED_CHANGE = 20;
 
+    /**
+     * The max speed a drone can travel in mph
+     */
+    private static final double MAX_SPEED = 60;
+
     public AnomalyDetector() { }
 
     /**
@@ -135,5 +140,11 @@ public class AnomalyDetector {
     public boolean checkSpeedChange(final TelemetryData thePrevious,
                                      final TelemetryData theCurrent) {
         return Math.abs(thePrevious.getSpeed() - theCurrent.getSpeed()) >= MAX_SPEED_CHANGE;
+    }
+
+    public boolean checkGpsChange(final TelemetryData thePrevious,
+                                  final TelemetryData theCurrent) {
+
+
     }
 }
