@@ -153,7 +153,7 @@ public class AnomalyDetector {
      * @return true if the battery level is at or below the threshold;
      *         false otherwise
      */
-    public boolean checkLowBattery(final TelemetryData theData) {
+    private boolean checkLowBattery(final TelemetryData theData) {
         return theData.getBatteryLevel() <= LOW_BATTERY_THRESHOLD;
     }
 
@@ -166,7 +166,7 @@ public class AnomalyDetector {
      * @return true if the absolute altitude difference meets or exceeds
      *         the configured threshold; false otherwise
      */
-    public boolean checkAltitudeChange(final TelemetryData thePrevious,
+    private boolean checkAltitudeChange(final TelemetryData thePrevious,
                                      final TelemetryData theCurrent) {
         return Math.abs(thePrevious.getAltitude() - theCurrent.getAltitude()) >= MAX_ALTITUDE_CHANGE;
     }
@@ -177,7 +177,7 @@ public class AnomalyDetector {
      * @param theCurrent the drone's current telemetry data
      * @return true if the drones altitude rises above the limit; false otherwise
      */
-    public boolean checkAltitudeHeight(final TelemetryData theCurrent) {
+    private boolean checkAltitudeHeight(final TelemetryData theCurrent) {
         return theCurrent.getAltitude() > MAX_ALTITUDE;
     }
 
@@ -191,7 +191,7 @@ public class AnomalyDetector {
      *         the configured threshold; false otherwise
      */
     // Returns true when speed changed by 20 mph or more
-    public boolean checkSpeedChange(final TelemetryData thePrevious,
+    private boolean checkSpeedChange(final TelemetryData thePrevious,
                                      final TelemetryData theCurrent) {
         return Math.abs(thePrevious.getSpeed() - theCurrent.getSpeed()) >= MAX_SPEED_CHANGE;
     }
@@ -202,7 +202,7 @@ public class AnomalyDetector {
      * @param theCurrent the drone's current telemetry data
      * @return true if the drones speed is faster than 60 mph; false otherwise
      */
-    public boolean checkSpeed(final TelemetryData theCurrent) {
+    private boolean checkSpeed(final TelemetryData theCurrent) {
         return theCurrent.getSpeed() > MAX_SPEED;
     }
 
@@ -213,7 +213,7 @@ public class AnomalyDetector {
      * @param theCurrent the drone's current telemetry data
      * @return the distance between two points
      */
-    public double calculateDistance(final TelemetryData thePrevious,
+    private double calculateDistance(final TelemetryData thePrevious,
                                   final TelemetryData theCurrent) {
         double lat1 = thePrevious.getLatitude();
         double lon1 = thePrevious.getLongitude();
@@ -250,7 +250,7 @@ public class AnomalyDetector {
      * @return true if the distance passes the threshold and false if the
      * change in distance is less.
      */
-    public boolean checkGpsChange(final TelemetryData thePrevious,
+    private boolean checkGpsChange(final TelemetryData thePrevious,
                                   final TelemetryData theCurrent) {
         final double distanceTraveled = calculateDistance(thePrevious, theCurrent);
 
@@ -264,7 +264,7 @@ public class AnomalyDetector {
      * @param theCurrent the drone's current telemetry data
      * @return true if the turn angle exceeds the maximum of 45 degree; false otherwise
      */
-    public boolean checkTurnAngle(final TelemetryData thePrevious,
+    private boolean checkTurnAngle(final TelemetryData thePrevious,
                                   final TelemetryData theCurrent) {
         return Math.abs(theCurrent.getOrientation() - thePrevious.getOrientation()) > MAX_TURN_ANGLE;
 
