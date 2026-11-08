@@ -14,42 +14,36 @@ public class DroneMonitorController {
 
     // For now, just hard-coding it to have 3 drones.
     private List<Drone> drones;
-    private MonitorDashboard DashBoard;
-    private TelemetryGenerator TeleGen;
-    private AnomalyDetector AnomDetector;
-    private Random random;
+    final private MonitorDashboard DashBoard;
+    final private TelemetryGenerator TeleGen;
+    final private AnomalyDetector AnomDetector;
+    final private Random random;
 
 
 
-    private DroneMonitorController() {
-        // Initialize all the stuff that we will be using
-        DashBoard = new MonitorDashboard();
-        // Initializing drones list as 3 drones
-        drones = new ArrayList<Drone>(List.of(
-                new Drone[]{
-                        new Drone("Drone 1"),
-                        new Drone("Drone 2"),
-                        new Drone("Drone 3")
-                }));
-        // TODO Send the initialized arraylist drones to the dashboard.
-        //  At the time of writing this there is no way for me to add or remove drones from the dashboard
-        // Initialize random to be used for random change and value generation
-        random = new Random();
-        // Initialize Telemetry Generator and Anomaly Detector
-        TeleGen = new TelemetryGenerator(random);
-        AnomDetector = new AnomalyDetector();
-
+    public DroneMonitorController(
+            final MonitorDashboard theDash,
+            final List<Drone> theDrones,
+            final TelemetryGenerator theTeleGen,
+            final AnomalyDetector theAnomDetector,
+            final Random theRand
+            ) {
+        DashBoard = theDash;
+        drones = theDrones;
+        TeleGen = theTeleGen;
+        AnomDetector = theAnomDetector;
+        random = theRand;
     }
 
-
+    // TODO I don't like that updateAllDrones is handling both drone updating and anomaly detection.
+    //  Split it into two methods somehow.
     /**
-     * Updates all drones
-     * @param theDrones
+     * Updates all drones and checks for anomalies.
+     * @return list of the anomalies detected.
      */
-    private Map<String, TelemetryData> updateAllDrones(Drone[] theDrones) {
-        Map<String, TelemetryData> dronesData = new HashMap<>();
-        for (Drone drone : theDrones) {
-            String droneName = drone.getDroneId();
+    private List<AnomalyRecord> updateAllDrones() {
+        List<AnomalyRecord> anomalies = new ArrayList<>();
+        for (Drone drone : drones) {
             TelemetryData OldData = drone.getData();
             TelemetryData NewData = TeleGen.generateTelemetry(OldData);
             drone.updateTelemetry(NewData);
@@ -57,13 +51,15 @@ public class DroneMonitorController {
             final int gpsChance = random.nextInt(99) + 1;
             NewData = GPS_Spoofer(NewData, gpsChance);
 
-            AnomDetector.detectAnomalies(OldData, NewData, drone.getDroneId());
-
-            dronesData.put(droneName, NewData);
+            // Check for anomalies
+            List<AnomalyRecord> anomaliesForThisDrone = AnomDetector.detectAnomalies(OldData, NewData, drone.getDroneId());
+            anomalies.addAll(anomaliesForThisDrone);
         }
-        return dronesData;
+        return anomalies;
     }
 
+
+    // TODO Should GPS_Spoofer be in TeleGen?
     /**
      *
      * @param theOldData The input data to modify.
@@ -80,7 +76,9 @@ public class DroneMonitorController {
             if (theChance <= 88) {
                 spoofedTD = new TelemetryData(
                         theOldData.speed(),
-                        theOldData.altitude() + ((random.nextBoolean()) ? -120 : 120),
+                        theOldData.altitude() + ((random.nextBoolean())
+                                ? AnomalyDetector.MAX_ALTITUDE_CHANGE
+                                : -AnomalyDetector.MAX_ALTITUDE_CHANGE),
                         theOldData.latitude(),
                         theOldData.longitude(),
                         theOldData.orientation(),
@@ -92,7 +90,9 @@ public class DroneMonitorController {
                 spoofedTD = new TelemetryData(
                         theOldData.speed(),
                         theOldData.altitude(),
-                        theOldData.latitude(), // needs to change this
+                        theOldData.latitude() + ((random.nextBoolean())
+                                ? AnomalyDetector.MAX_GPS_THRESHOLD
+                                : -AnomalyDetector.MAX_GPS_THRESHOLD),
                         theOldData.longitude(),
                         theOldData.orientation(),
                         theOldData.batteryLevel(),
@@ -101,9 +101,11 @@ public class DroneMonitorController {
             } else if (theChance <= 100) {
                 spoofedTD = new TelemetryData(
                         theOldData.speed(),
-                        theOldData.altitude() + ((random.nextBoolean()) ? -120 : +120),
+                        theOldData.altitude(),
                         theOldData.latitude(),
-                        theOldData.longitude(), // needs to change this
+                        theOldData.longitude() + ((random.nextBoolean())
+                                ? AnomalyDetector.MAX_GPS_THRESHOLD
+                                : -AnomalyDetector.MAX_GPS_THRESHOLD),
                         theOldData.orientation(),
                         theOldData.batteryLevel(),
                         theOldData.timestamp()
