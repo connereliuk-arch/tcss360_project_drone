@@ -19,33 +19,31 @@ public class AnomalyRepository {
     }
 
     public void initializeDatabase() throws SQLException {
-        final StringBuilder sql = new StringBuilder("CREATE TABLE IF NOT EXISTS anomalies ("
-                + "anomaly_id INTEGER PRIMARY KEY AUTOINCREMENT,"
-                + "drone_id TEXT NOT NULL,"
-                + "anomaly_type TEXT NOT NULL,"
-                + "details TEXT,"
-                + "time_stamp TEXT NOT NULL,"
-                + "speed REAL NOT NULL,"
-                + "altitude REAL NOT NULL,"
-                + "gps_latitude REAL NOT NULL,"
-                + "gps_longitude REAL NOT NULL,"
-                + "orientation REAL NOT NULL,"
-                + "battery_level REAL NOT NULL)");
+        String sql = "CREATE TABLE IF NOT EXISTS anomalies ("
+                    + "anomaly_id INTEGER PRIMARY KEY AUTOINCREMENT,"
+                    + "drone_id TEXT NOT NULL,"
+                    + "anomaly_type TEXT NOT NULL,"
+                    + "details TEXT,"
+                    + "time_stamp TEXT NOT NULL,"
+                    + "speed REAL NOT NULL,"
+                    + "altitude REAL NOT NULL,"
+                    + "gps_latitude REAL NOT NULL,"
+                    + "gps_longitude REAL NOT NULL,"
+                    + "orientation REAL NOT NULL,"
+                    + "battery_level REAL NOT NULL)";
         myDatabase = DriverManager.getConnection(myDatabaseUrl);
 
-        PreparedStatement statement = myDatabase.prepareStatement(sql.toString());
+        PreparedStatement statement = myDatabase.prepareStatement(sql);
         statement.execute();
         statement.close();
     }
 
     public boolean saveAnomaly(final AnomalyRecord theAnomaly) throws SQLException {
-        final StringBuilder sql = new StringBuilder(
-            "INSERT INTO anomalies (drone_id, anomaly_type, details, time_stamp, "
-                                    + "speed, altitude, gps_latitude, "
-                                    + "gps_longitude, orientation, battery_level) "
-                                    + "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)"
-        );
-        PreparedStatement statement = myDatabase.prepareStatement(sql.toString());
+        String sql = "INSERT INTO anomalies (drone_id, anomaly_type, details, time_stamp, "
+                    + "speed, altitude, gps_latitude, "
+                    + "gps_longitude, orientation, battery_level) "
+                    + "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
+        PreparedStatement statement = myDatabase.prepareStatement(sql);
         statement.setString(1, theAnomaly.getDroneId());
         statement.setString(2, theAnomaly.getAnomalyType());
         statement.setString(3, theAnomaly.getDetails());
@@ -65,8 +63,8 @@ public class AnomalyRepository {
 
     public List<AnomalyRecord> getAllAnomalies() throws SQLException {
         List<AnomalyRecord> anomalies = new ArrayList<>();
-        final StringBuilder sql = new StringBuilder("SELECT * FROM anomalies");
-        PreparedStatement statement = myDatabase.prepareStatement(sql.toString());
+        final String sql = "SELECT * FROM anomalies";
+        PreparedStatement statement = myDatabase.prepareStatement(sql);
         ResultSet items = statement.executeQuery();
 
 
