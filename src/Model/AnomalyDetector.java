@@ -55,6 +55,11 @@ public class AnomalyDetector {
      */
     private static final double MAX_SPEED = 60;
 
+    /**
+     * The max distance a drone can travel between intervals in meters
+     */
+    private static final double MAX_GPS_THRESHOLD = 50;
+
     public AnomalyDetector() { }
 
     /**
@@ -99,6 +104,15 @@ public class AnomalyDetector {
             final String anomalyType = "SPEED_CHANGE";
             final String details = "Speed has changed too fast from "
                     + thePrevious.getSpeed() + " to " + theCurrent.getSpeed() + ".";
+
+            records.add(new AnomalyRecord(theDroneId, theCurrent, timestamp, anomalyType, details));
+        }
+
+        if (checkGpsChange(thePrevious, theCurrent)) {
+            final String anomalyType = "GPS_CHANGE";
+            final String details = "The GPS position has changed too much from ("
+                    + thePrevious.getLatitude() + ", " + thePrevious.getLongitude() + ") to ("
+                    + theCurrent.getLatitude() + ", " + theCurrent.getLongitude() + ").";
 
             records.add(new AnomalyRecord(theDroneId, theCurrent, timestamp, anomalyType, details));
         }
@@ -181,5 +195,20 @@ public class AnomalyDetector {
 
         return 2 * earthRadius * Math.asin(Math.sqrt(a));
 
+    }
+
+    /**
+     * Checks if the change in GPS position is greater than the max threshold of 50m
+     *
+     * @param thePrevious the drone's previous telemetry data
+     * @param theCurrent the drone's current telemetry data
+     * @return true if the distance passes the threshold and false if the
+     * change in distance is less.
+     */
+    public boolean checkGpsChange(final TelemetryData thePrevious,
+                                  final TelemetryData theCurrent) {
+        final double distanceTraveled = calculateDistance(thePrevious, theCurrent);
+
+        return distanceTraveled > MAX_GPS_THRESHOLD;
     }
 }
