@@ -116,6 +116,15 @@ public class AnomalyDetector {
             records.add(new AnomalyRecord(theDroneId, theCurrent, timestamp, anomalyType, details));
         }
 
+        // Check if speed has changed outside the limit
+        if (checkSpeed(theCurrent)) {
+            final String anomalyType = "HIGH_SPEED";
+            final String details = "Speed is too fast. Current speed: "
+                    + theCurrent.getSpeed() + ".";
+
+            records.add(new AnomalyRecord(theDroneId, theCurrent, timestamp, anomalyType, details));
+        }
+
         if (checkGpsChange(thePrevious, theCurrent)) {
             final String anomalyType = "GPS_CHANGE";
             final String details = "The GPS position has changed too much from ("
@@ -177,6 +186,16 @@ public class AnomalyDetector {
     public boolean checkSpeedChange(final TelemetryData thePrevious,
                                      final TelemetryData theCurrent) {
         return Math.abs(thePrevious.getSpeed() - theCurrent.getSpeed()) >= MAX_SPEED_CHANGE;
+    }
+
+    /**
+     * Checks whether the drones current speed is greater than the maximum of 60 mph
+     *
+     * @param theCurrent the drone's current telemetry data
+     * @return true if the drones speed is faster than 60 mph; false otherwise
+     */
+    public boolean checkSpeed(final TelemetryData theCurrent) {
+        return theCurrent.getSpeed() > MAX_SPEED;
     }
 
     /**
