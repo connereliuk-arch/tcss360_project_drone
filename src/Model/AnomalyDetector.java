@@ -134,6 +134,14 @@ public class AnomalyDetector {
             records.add(new AnomalyRecord(theDroneId, theCurrent, timestamp, anomalyType, details));
         }
 
+        if (checkTurnAngle(thePrevious, theCurrent)) {
+            final String anomalyType = "TURN_ANGLE";
+            final String details = "The drones turn angle has increased too much from "
+                    + thePrevious.getOrientation() + " to " + theCurrent.getOrientation() + ".";
+
+            records.add(new AnomalyRecord(theDroneId, theCurrent, timestamp, anomalyType, details));
+        }
+
         return records;
     }
 
@@ -247,5 +255,18 @@ public class AnomalyDetector {
         final double distanceTraveled = calculateDistance(thePrevious, theCurrent);
 
         return distanceTraveled > MAX_GPS_THRESHOLD;
+    }
+
+    /**
+     * Checks whether the angle of the drone has exceeded 45 degrees in one telemetry change
+     *
+     * @param thePrevious the drone's previous telemetry data
+     * @param theCurrent the drone's current telemetry data
+     * @return true if the turn angle exceeds the maximum of 45 degree; false otherwise
+     */
+    public boolean checkTurnAngle(final TelemetryData thePrevious,
+                                  final TelemetryData theCurrent) {
+        return Math.abs(theCurrent.getOrientation() - thePrevious.getOrientation()) > MAX_TURN_ANGLE;
+
     }
 }
