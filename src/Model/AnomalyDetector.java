@@ -33,7 +33,7 @@ public class AnomalyDetector {
     /**
      * Max altitude change in meters
      */
-    private static final double MAX_ALTITUDE_CHANGE = 10;
+    public static final double MAX_ALTITUDE_CHANGE = 10;
 
     /**
      * Highest a drone can fly in meters
@@ -58,7 +58,7 @@ public class AnomalyDetector {
     /**
      * The max distance a drone can travel between intervals in meters
      */
-    private static final double MAX_GPS_THRESHOLD = 50;
+    public static final double MAX_GPS_THRESHOLD = 50;
 
     public AnomalyDetector() { }
 
