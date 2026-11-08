@@ -99,6 +99,14 @@ public class AnomalyDetector {
             records.add(new AnomalyRecord(theDroneId, theCurrent, timestamp, anomalyType, details));
         }
 
+        if (checkAltitudeHeight(theCurrent)) {
+            final String anomalyType = "DRONE_ALTITUDE";
+            final String details = "The drones altitude has exceeded the maximum altitude. Current altitude: "
+                    + theCurrent.getAltitude();
+
+            records.add(new AnomalyRecord(theDroneId, theCurrent, timestamp, anomalyType, details));
+        }
+
         // Check if speed has changed outside the limit
         if (checkSpeedChange(thePrevious, theCurrent)) {
             final String anomalyType = "SPEED_CHANGE";
@@ -144,6 +152,16 @@ public class AnomalyDetector {
     public boolean checkAltitudeChange(final TelemetryData thePrevious,
                                      final TelemetryData theCurrent) {
         return Math.abs(thePrevious.getAltitude() - theCurrent.getAltitude()) >= MAX_ALTITUDE_CHANGE;
+    }
+
+    /**
+     * Checks whether the current altitude of the drone is above the height limit of 120m
+     *
+     * @param theCurrent the drone's current telemetry data
+     * @return true if the drones altitude rises above the limit; false otherwise
+     */
+    public boolean checkAltitudeHeight(final TelemetryData theCurrent) {
+        return theCurrent.getAltitude() > MAX_ALTITUDE;
     }
 
     /**
