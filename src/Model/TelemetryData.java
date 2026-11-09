@@ -12,6 +12,7 @@ public record TelemetryData(double speed,
 
     // Note: records already make accessors like speed() and altitude()
     // automatically. The getX() methods below match the names in our UML.
+    // AnomalyDetector uses getters? Idk should probs ask during meeting :P
 
     public double getSpeed() {
         return speed;

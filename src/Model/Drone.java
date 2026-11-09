@@ -11,6 +11,12 @@ public class Drone {
     private static final double START_ORIENTATION = 0.0;
     private static final double START_BATTERY = 100.0;
 
+    private static final double MIN_BATTERY = 0.0;
+    private static final double MAX_BATTERY = 100.0;
+    private static final double MAX_LATITUDE = 90.0;
+    private static final double MAX_LONGITUDE = 180.0;
+    private static final double MAX_ORIENTATION = 360.0;
+
     /** This drone's unique ID. */
     private final String droneId;
 
@@ -27,8 +33,15 @@ public class Drone {
         // so they don't all sit on top of each other on the map.
     } // end of Drone
 
+    public Drone(final String droneId, final TelemetryData data) {
+        this.droneId = droneId;
+        this.telemetry = data;
+    } // end of Drone
+
     public boolean updateTelemetry(final TelemetryData data) {
-        // TO DO: isValidTelemetry(data) - only update if the data is valid
+        if (!isValidTelemetry(data)) {
+            return false;
+        }
         telemetry = data;
         return true;
     } // end of updateTelemetry
@@ -65,10 +78,26 @@ public class Drone {
         return telemetry;
     } // end of getData
 
-    // TO DO: private boolean isValidTelemetry(final TelemetryData data)
-    //   - return false if data is null
-    //   - return false if battery is below 0 or above 100
-    //   - return false if altitude is negative
-    //   - return false if latitude/longitude are out of range
+    private boolean isValidTelemetry(final TelemetryData data) {
+        if (data == null) {
+            return false;
+        }
+        if (data.getSpeed() < 0) {
+            return false;
+        }
+        if (data.getAltitude() < 0) {
+            return false;
+        }
+        if (data.getBatteryLevel() < MIN_BATTERY || data.getBatteryLevel() > MAX_BATTERY) {
+            return false;
+        }
+        if (Math.abs(data.getLatitude()) > MAX_LATITUDE) {
+            return false;
+        }
+        if (Math.abs(data.getLongitude()) > MAX_LONGITUDE) {
+            return false;
+        }
+        return data.getOrientation() >= 0 && data.getOrientation() < MAX_ORIENTATION;
+    } // end of isValidTelemetry
 
 } // end of Drone
