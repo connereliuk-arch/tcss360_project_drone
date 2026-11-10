@@ -44,16 +44,16 @@ public class AnomalyRepository {
                     + "gps_longitude, orientation, battery_level) "
                     + "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
         PreparedStatement statement = myDatabase.prepareStatement(sql);
-        statement.setString(1, theAnomaly.getDroneId());
-        statement.setString(2, theAnomaly.getAnomalyType());
-        statement.setString(3, theAnomaly.getDetails());
-        statement.setString(4, theAnomaly.getTimestamp().toString());
-        statement.setDouble(5, theAnomaly.getData().getSpeed());
-        statement.setDouble(6, theAnomaly.getData().getAltitude());
-        statement.setDouble(7, theAnomaly.getData().getLatitude());
-        statement.setDouble(8, theAnomaly.getData().getLongitude());
-        statement.setDouble(9, theAnomaly.getData().getOrientation());
-        statement.setDouble(10, theAnomaly.getData().getBatteryLevel());
+        statement.setString(1, theAnomaly.droneId());
+        statement.setString(2, theAnomaly.anomalyType());
+        statement.setString(3, theAnomaly.details());
+        statement.setString(4, theAnomaly.timestamp().toString());
+        statement.setDouble(5, theAnomaly.data().getSpeed());
+        statement.setDouble(6, theAnomaly.data().getAltitude());
+        statement.setDouble(7, theAnomaly.data().getLatitude());
+        statement.setDouble(8, theAnomaly.data().getLongitude());
+        statement.setDouble(9, theAnomaly.data().getOrientation());
+        statement.setDouble(10, theAnomaly.data().getBatteryLevel());
 
         final int rowsAffected = statement.executeUpdate();
         statement.close();
