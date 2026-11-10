@@ -20,53 +20,25 @@ import java.time.LocalDateTime;
  * @see TelemetryData
  * @see AnomalyDetector
  */
-public class AnomalyRecord {
-    private final String myDroneId;
-
-    private final TelemetryData myData;
-
-    private final LocalDateTime myTimeStamp;
-
-    private final String myAnomalyType;
-
-    private final String myDetails;
-
-
-    /**
-     * Constructs an AnomalyRecord containing information about a detected
-     * drone anomaly.
-     *
-     * @param theDroneId the unique identifier of the drone associated with the anomaly
-     * @param theData the telemetry data recorded when the anomaly occurred
-     * @param theTimestamp the date and time when the anomaly was detected
-     * @param theAnomalyType the classification of the detected anomaly
-     * @param theDetails a description of the detected anomaly
-     */
-    public AnomalyRecord(String theDroneId,
-                         TelemetryData theData,
-                         LocalDateTime theTimestamp,
-                         String theAnomalyType,
-                         String theDetails) {
-        myDroneId = theDroneId;
-        myData = theData;
-        myTimeStamp = theTimestamp;
-        myAnomalyType = theAnomalyType;
-        myDetails = theDetails;
-    }
+public record AnomalyRecord(String myDroneId,
+                            TelemetryData myData,
+                            LocalDateTime myTimeStamp,
+                            String myAnomalyType,
+                            String myDetails) {
 
     /** @return the unique identifier of the drone associated with the anomaly */
-    public String getDroneId() { return myDroneId; }
+    public String droneId() { return myDroneId; }
 
     /** @return the data associated with the anomaly */
-    public TelemetryData getData() { return myData; }
+    public TelemetryData data() { return myData; }
 
     /** @return the timestamp when the anomaly was detected */
-    public LocalDateTime getTimestamp() { return myTimeStamp; }
+    public LocalDateTime timestamp() { return myTimeStamp; }
 
     /** @return the classification of the detected anomaly */
-    public String getAnomalyType() { return myAnomalyType; }
+    public String anomalyType() { return myAnomalyType; }
 
     /** @return the description of the detected anomaly */
-    public String getDetails() { return myDetails; }
+    public String details() { return myDetails; }
 
 }
