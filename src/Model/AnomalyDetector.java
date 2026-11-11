@@ -7,15 +7,15 @@ import java.util.List;
 /**
  * The AnomalyDetector class monitors drone telemetry data to identify
  * unusual behavior and potential safety concerns.
- *
+ * <p>
  * It compares previous and current telemetry readings against predefined
  * thresholds to detect anomalies related to battery levels, altitude
  * changes, and speed changes.
- *
+ * <p>
  * When an anomaly is detected, an AnomalyRecord is created containing
  * the drone ID, current telemetry data, timestamp, anomaly type, and
  * a description of the detected condition.
- *
+ * <p>
  * The detector uses predefined thresholds for determining when
  * telemetry readings are considered anomalous.
  *
@@ -65,7 +65,7 @@ public class AnomalyDetector {
     /**
      * Detects anomalies in the drone's current telemetry data by comparing
      * it against the previous telemetry data.
-     *
+     * <p>
      * Checks for low battery, significant altitude changes, and significant
      * speed changes. Creates an AnomalyRecord for each detected anomaly.
      *
