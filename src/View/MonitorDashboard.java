@@ -9,12 +9,16 @@ import java.awt.Font;
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
 import java.awt.Insets;
+import java.awt.GridLayout;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
+import java.util.Map;
+import java.util.LinkedHashMap;
+import java.util.ArrayList;
+import java.util.regex.Pattern;
 
 import javax.swing.BorderFactory;
 import javax.swing.JButton;
-import javax.swing.JComboBox;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
 import javax.swing.JMenuItem;
@@ -24,7 +28,11 @@ import javax.swing.JPopupMenu;
 import javax.swing.JScrollPane;
 import javax.swing.JTabbedPane;
 import javax.swing.JTable;
-import javax.swing.JTextArea;
+import javax.swing.JTextField;
+import javax.swing.RowFilter;
+import javax.swing.event.DocumentEvent;
+import javax.swing.event.DocumentListener;
+import javax.swing.table.TableRowSorter;
 import javax.swing.SwingConstants;
 import javax.swing.SwingUtilities;
 import javax.swing.table.DefaultTableModel;
@@ -35,21 +43,21 @@ public class MonitorDashboard extends JFrame {
     private JPanel myMainPanel;
     private JPanel myMapPanel;
     private JPanel myDroneInfoPanel;
+    private JPanel myDroneCardsPanel;
     private JPanel myAnomalyNotificationPanel;
+    private JPanel myAnomalyNotificationsList;
     private JPanel myMapViewPanel;
     private JPanel myAnomalyLogPanel;
 
-    private JLabel myDroneIdLabel;
-    private JLabel mySpeedLabel;
-    private JLabel myAltitudeLabel;
-    private JLabel myLatitudeLabel;
-    private JLabel myLongitudeLabel;
-    private JLabel myBatteryLabel;
-    private JLabel myAnomalyNotificationLabel;
+    private final Map<String, DroneLabels> myDroneLabelMap = new LinkedHashMap<>();
 
     private JTabbedPane myTabbedPane;
     private JTable myAnomalyTable;
     private DefaultTableModel myAnomalyTableModel;
+    private TableRowSorter<DefaultTableModel> myAnomalyTableSorter;
+    private JTextField myAnomalySearchField;
+    private final DateTimeFormatter myAnomalyTimeFormatter =
+            DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
 
     private JButton myMenuButton;
     private JPopupMenu myMenu;
@@ -134,37 +142,19 @@ public class MonitorDashboard extends JFrame {
         myConstraints.weightx = 0.65;
         myContentPanel.add(myMapPanel, myConstraints);
 
-        // Drone information panel.
-        myDroneInfoPanel = new JPanel(new GridBagLayout());
+        // Scrollable grid containing one telemetry card for every drone.
+        myDroneInfoPanel = new JPanel(new BorderLayout());
         myDroneInfoPanel.setBorder(
                 BorderFactory.createTitledBorder("Drone Information"));
 
-        GridBagConstraints myInfoConstraints = new GridBagConstraints();
-        myInfoConstraints.gridx = 0;
-        myInfoConstraints.anchor = GridBagConstraints.WEST;
-        myInfoConstraints.fill = GridBagConstraints.HORIZONTAL;
-        myInfoConstraints.insets = new Insets(10, 12, 10, 12);
+        myDroneCardsPanel = new JPanel(new GridLayout(0, 1, 6, 6));
+        myDroneCardsPanel.add(new JLabel(
+                "Waiting for drone telemetry...", SwingConstants.CENTER));
 
-        myDroneIdLabel = createInfoLabel("Drone ID: Drone-001");
-        mySpeedLabel = createInfoLabel("Speed: --");
-        myAltitudeLabel = createInfoLabel("Altitude: --");
-        myLatitudeLabel = createInfoLabel("Latitude: --");
-        myLongitudeLabel = createInfoLabel("Longitude: --");
-        myBatteryLabel = createInfoLabel("Battery: --");
-
-        JLabel[] myInfoLabels = {
-                myDroneIdLabel,
-                mySpeedLabel,
-                myAltitudeLabel,
-                myLatitudeLabel,
-                myLongitudeLabel,
-                myBatteryLabel
-        };
-
-        for (int myIndex = 0; myIndex < myInfoLabels.length; myIndex++) {
-            myInfoConstraints.gridy = myIndex;
-            myDroneInfoPanel.add(myInfoLabels[myIndex], myInfoConstraints);
-        }
+        JScrollPane myDroneScrollPane = new JScrollPane(myDroneCardsPanel);
+        myDroneScrollPane.setVerticalScrollBarPolicy(
+                JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED);
+        myDroneInfoPanel.add(myDroneScrollPane, BorderLayout.CENTER);
 
         myConstraints.gridx = 1;
         myConstraints.weightx = 0.35;
@@ -174,43 +164,28 @@ public class MonitorDashboard extends JFrame {
     }
 
     /**
-     * Creates a consistently styled drone information label.
-     *
-     * @param theText text displayed by the label
-     * @return the configured label
-     */
-    private JLabel createInfoLabel(final String theText) {
-        JLabel myLabel = new JLabel(theText);
-        myLabel.setFont(new Font("Arial", Font.PLAIN, 15));
-        return myLabel;
-    }
-
-    /**
-     * Creates the recent anomaly notification section.
+     * Creates a scrollable area that can show simultaneous anomaly notifications.
      */
     private void createAnomalyNotification() {
         myAnomalyNotificationPanel = new JPanel(new BorderLayout());
         myAnomalyNotificationPanel.setBorder(
-                BorderFactory.createTitledBorder(
-                        "Recent Anomaly Notification"));
+                BorderFactory.createTitledBorder("Recent Anomaly Notifications"));
 
-        myAnomalyNotificationLabel = new JLabel(
-                "No recent anomalies",
-                SwingConstants.LEFT);
+        myAnomalyNotificationsList = new JPanel();
+        myAnomalyNotificationsList.setLayout(
+                new javax.swing.BoxLayout(myAnomalyNotificationsList,
+                        javax.swing.BoxLayout.Y_AXIS));
+        JLabel myEmptyLabel = new JLabel("No recent anomalies");
+        myEmptyLabel.setBorder(BorderFactory.createEmptyBorder(4, 6, 4, 6));
+        myAnomalyNotificationsList.add(myEmptyLabel);
 
-        myAnomalyNotificationLabel.setFont(
-                new Font("Arial", Font.PLAIN, 14));
-
+        JScrollPane myNotificationScrollPane =
+                new JScrollPane(myAnomalyNotificationsList);
+        myNotificationScrollPane.setVerticalScrollBarPolicy(
+                JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED);
         myAnomalyNotificationPanel.add(
-                myAnomalyNotificationLabel,
-                BorderLayout.CENTER);
-
-        myAnomalyNotificationPanel.setPreferredSize(
-                new Dimension(0, 75));
-
-        myMainPanel.add(
-                myAnomalyNotificationPanel,
-                BorderLayout.SOUTH);
+                myNotificationScrollPane, BorderLayout.CENTER);
+        myAnomalyNotificationPanel.setPreferredSize(new Dimension(0, 115));
     }
 
     /**
@@ -251,23 +226,63 @@ public class MonitorDashboard extends JFrame {
 
         myAnomalyTable = new JTable(myAnomalyTableModel);
         myAnomalyTable.setFillsViewportHeight(true);
+        myAnomalyTableSorter = new TableRowSorter<>(myAnomalyTableModel);
+        myAnomalyTable.setRowSorter(myAnomalyTableSorter);
 
+        JPanel mySearchPanel = new JPanel(new BorderLayout(8, 4));
+        mySearchPanel.add(new JLabel("Search anomalies:"), BorderLayout.WEST);
+        myAnomalySearchField = new JTextField();
+        myAnomalySearchField.setToolTipText(
+                "Filter by drone ID, timestamp, anomaly type, or details");
+        myAnomalySearchField.getDocument().addDocumentListener(
+                new DocumentListener() {
+                    private void applySearch() {
+                        String myQuery = myAnomalySearchField.getText().trim();
+                        if (myQuery.isEmpty()) {
+                            myAnomalyTableSorter.setRowFilter(null);
+                        } else {
+                            myAnomalyTableSorter.setRowFilter(
+                                    RowFilter.regexFilter(
+                                            "(?i)" + Pattern.quote(myQuery)));
+                        }
+                    }
+
+                    @Override
+                    public void insertUpdate(final DocumentEvent theEvent) {
+                        applySearch();
+                    }
+
+                    @Override
+                    public void removeUpdate(final DocumentEvent theEvent) {
+                        applySearch();
+                    }
+
+                    @Override
+                    public void changedUpdate(final DocumentEvent theEvent) {
+                        applySearch();
+                    }
+                });
+        mySearchPanel.add(myAnomalySearchField, BorderLayout.CENTER);
+        mySearchPanel.setBorder(BorderFactory.createEmptyBorder(6, 6, 6, 6));
+        myAnomalyLogPanel.add(mySearchPanel, BorderLayout.NORTH);
         myAnomalyLogPanel.add(
-                new JScrollPane(myAnomalyTable),
-                BorderLayout.CENTER);
+                new JScrollPane(myAnomalyTable), BorderLayout.CENTER);
 
         myTabbedPane.addTab("Map View", myMapViewPanel);
         myTabbedPane.addTab("Anomaly Log", myAnomalyLogPanel);
 
         // Place the tabs and menu button together.
         JPanel myBottomPanel = new JPanel(new BorderLayout(5, 5));
-        myBottomPanel.add(myTabbedPane, BorderLayout.CENTER);
+        JPanel myBottomContentPanel = new JPanel(new BorderLayout(5, 5));
+        myBottomContentPanel.add(myAnomalyNotificationPanel, BorderLayout.NORTH);
+        myBottomContentPanel.add(myTabbedPane, BorderLayout.CENTER);
+        myBottomPanel.add(myBottomContentPanel, BorderLayout.CENTER);
 
         myMenuButton = new JButton("Menu \u2630");
         myMenuButton.setFocusable(false);
         myBottomPanel.add(myMenuButton, BorderLayout.EAST);
 
-        myMainPanel.add(myBottomPanel, BorderLayout.PAGE_END);
+        myMainPanel.add(myBottomPanel, BorderLayout.SOUTH);
     }
 
     /**
@@ -295,21 +310,23 @@ public class MonitorDashboard extends JFrame {
         });
 
         mySelectDroneItem.addActionListener(theEvent -> {
-            String mySelectedDrone = (String) JOptionPane.showInputDialog(
-                    this,
-                    "Select a drone:",
-                    "Select Drone",
-                    JOptionPane.PLAIN_MESSAGE,
-                    null,
-                    new String[] {
-                            "Drone-001",
-                            "Drone-002",
-                            "Drone-003"
-                    },
-                    "Drone-001");
-
+            if (myDroneLabelMap.isEmpty()) {
+                JOptionPane.showMessageDialog(this,
+                        "No drone telemetry has been received yet.",
+                        "Select Drone", JOptionPane.INFORMATION_MESSAGE);
+                return;
+            }
+            Object mySelectedDrone = JOptionPane.showInputDialog(
+                    this, "Select a drone to locate in the telemetry list:",
+                    "Select Drone", JOptionPane.PLAIN_MESSAGE, null,
+                    myDroneLabelMap.keySet().toArray(),
+                    myDroneLabelMap.keySet().iterator().next());
             if (mySelectedDrone != null) {
-                myDroneIdLabel.setText("Drone ID: " + mySelectedDrone);
+                DroneLabels myLabels = myDroneLabelMap.get(mySelectedDrone.toString());
+                if (myLabels != null) {
+                    myDroneCardsPanel.scrollRectToVisible(
+                            myLabels.getPanel().getBounds());
+                }
             }
         });
 
@@ -347,32 +364,70 @@ public class MonitorDashboard extends JFrame {
     }
 
     /**
-     * Updates the displayed telemetry for a drone.
+     * Updates the displayed telemetry for every drone in the supplied map.
+     * The map key is the drone ID and the value is that drone's telemetry.
+     * Existing drone cards are updated; newly seen drones receive a new card.
      *
-     * @param theData telemetry data to display
-     * @param theDroneID identifier of the drone
+     * @param theDrones map of drone IDs to telemetry data
      */
     public void updateDroneTelemetry(
-            final TelemetryData theData,
-            final String theDroneID) {
-
-        if (theData == null) {
+            final Map<String, TelemetryData> theDrones) {
+        if (theDrones == null) {
             return;
         }
 
+        // Snapshot the map so the Swing update is not affected by caller changes.
+        final Map<String, TelemetryData> myTelemetrySnapshot =
+                new LinkedHashMap<>(theDrones);
         Runnable myUpdate = () -> {
-            myDroneIdLabel.setText("Drone ID: " + theDroneID);
-            mySpeedLabel.setText(
-                    String.format("Speed: %.2f", theData.getSpeed()));
-            myAltitudeLabel.setText(
-                    String.format("Altitude: %.2f", theData.getAltitude()));
-            myLatitudeLabel.setText(
-                    String.format("Latitude: %.5f", theData.getLatitude()));
-            myLongitudeLabel.setText(
-                    String.format("Longitude: %.5f", theData.getLongitude()));
-            myBatteryLabel.setText(
-                    String.format("Battery: %.0f%%",
-                            theData.getBatteryLevel()));
+            if (myDroneLabelMap.isEmpty()
+                    && myDroneCardsPanel.getComponentCount() == 1
+                    && myDroneCardsPanel.getComponent(0) instanceof JLabel
+                    && "Waiting for drone telemetry...".equals(
+                    ((JLabel) myDroneCardsPanel.getComponent(0)).getText())
+                    && !myTelemetrySnapshot.isEmpty()) {
+                myDroneCardsPanel.removeAll();
+            }
+
+            // Remove cards for drones that are no longer present in this snapshot.
+            java.util.Iterator<Map.Entry<String, DroneLabels>> myIterator =
+                    myDroneLabelMap.entrySet().iterator();
+            while (myIterator.hasNext()) {
+                Map.Entry<String, DroneLabels> myExisting = myIterator.next();
+                if (!myTelemetrySnapshot.containsKey(myExisting.getKey())) {
+                    myDroneCardsPanel.remove(myExisting.getValue().getPanel());
+                    myIterator.remove();
+                }
+            }
+
+            for (Map.Entry<String, TelemetryData> myEntry
+                    : myTelemetrySnapshot.entrySet()) {
+                String myDroneId = myEntry.getKey();
+                TelemetryData myData = myEntry.getValue();
+                if (myDroneId == null || myData == null) {
+                    continue;
+                }
+
+                DroneLabels myLabels = myDroneLabelMap.get(myDroneId);
+                if (myLabels == null) {
+                    myLabels = new DroneLabels();
+                    myDroneLabelMap.put(myDroneId, myLabels);
+                    myDroneCardsPanel.add(myLabels.getPanel());
+                }
+                myLabels.setMyDroneIdLabel(myDroneId);
+                myLabels.setMySpeedLabel(myData.getSpeed());
+                myLabels.setMyAltitudeLabel(myData.getAltitude());
+                myLabels.setMyLatitudeLabel(myData.getLatitude());
+                myLabels.setMyLongitudeLabel(myData.getLongitude());
+                myLabels.setMyBatteryLabel(myData.getBatteryLevel());
+            }
+            if (myDroneLabelMap.isEmpty()
+                    && myDroneCardsPanel.getComponentCount() == 0) {
+                myDroneCardsPanel.add(new JLabel(
+                        "Waiting for drone telemetry...", SwingConstants.CENTER));
+            }
+            myDroneCardsPanel.revalidate();
+            myDroneCardsPanel.repaint();
         };
 
         if (SwingUtilities.isEventDispatchThread()) {
@@ -395,7 +450,7 @@ public class MonitorDashboard extends JFrame {
     }
 
     /**
-     * Displays a recent anomaly notification.
+     * Adds an anomaly notification without replacing notifications already shown.
      *
      * @param theRecord anomaly to display
      */
@@ -403,24 +458,18 @@ public class MonitorDashboard extends JFrame {
         if (theRecord == null) {
             return;
         }
-
         Runnable myUpdate = () -> {
-            myAnomalyNotificationLabel.setText(
-                    "<html><b>" + theRecord.getAnomalyType()
-                            + ":</b> " + theRecord.getDetails()
-                            + " (Drone: " + theRecord.getDroneId()
-                            + ")</html>");
-
-            myAnomalyTableModel.addRow(new Object[] {
-                    theRecord.getDroneId(),
-                    theRecord.getTimestamp().format(
-                            DateTimeFormatter.ofPattern(
-                                    "yyyy-MM-dd HH:mm:ss")),
-                    theRecord.getAnomalyType(),
-                    theRecord.getDetails()
-            });
+            if (myAnomalyNotificationsList.getComponentCount() == 1
+                    && myAnomalyNotificationsList.getComponent(0) instanceof JLabel
+                    && "No recent anomalies".equals(
+                    ((JLabel) myAnomalyNotificationsList.getComponent(0)).getText())) {
+                myAnomalyNotificationsList.removeAll();
+            }
+            addAnomalyNotification(theRecord);
+            addAnomalyToTable(theRecord);
+            myAnomalyNotificationsList.revalidate();
+            myAnomalyNotificationsList.repaint();
         };
-
         if (SwingUtilities.isEventDispatchThread()) {
             myUpdate.run();
         } else {
@@ -428,48 +477,73 @@ public class MonitorDashboard extends JFrame {
         }
     }
 
+    /** Adds one anomaly row using the record's actual record accessors. */
+    private void addAnomalyToTable(final AnomalyRecord theRecord) {
+        myAnomalyTableModel.addRow(new Object[] {
+                theRecord.myDroneId(),
+                theRecord.myTimeStamp() == null ? "" :
+                        theRecord.myTimeStamp().format(myAnomalyTimeFormatter),
+                theRecord.myAnomalyType(),
+                theRecord.myDetails()
+        });
+    }
+
+    /** Adds a visible notification for one anomaly. */
+    private void addAnomalyNotification(final AnomalyRecord theRecord) {
+        String myTimestamp = theRecord.myTimeStamp() == null ? "Unknown time"
+                : theRecord.myTimeStamp().format(myAnomalyTimeFormatter);
+        String myMessage = "<html><b>" + escapeHtml(theRecord.myAnomalyType())
+                + "</b> — " + escapeHtml(theRecord.myDetails())
+                + " (Drone: " + escapeHtml(theRecord.myDroneId())
+                + ", " + myTimestamp + ")</html>";
+        JLabel myNotification = new JLabel(myMessage);
+        myNotification.setFont(new Font("Arial", Font.PLAIN, 13));
+        myNotification.setBorder(BorderFactory.createCompoundBorder(
+                BorderFactory.createMatteBorder(0, 0, 1, 0, Color.LIGHT_GRAY),
+                BorderFactory.createEmptyBorder(5, 7, 5, 7)));
+        myNotification.setAlignmentX(LEFT_ALIGNMENT);
+        myAnomalyNotificationsList.add(myNotification);
+    }
+
+    /** Escapes record text before placing it in a Swing HTML label. */
+    private String escapeHtml(final String theText) {
+        if (theText == null) {
+            return "";
+        }
+        return theText.replace("&", "&amp;")
+                .replace("<", "&lt;")
+                .replace(">", "&gt;")
+                .replace("\"", "&quot;")
+                .replace("'", "&#39;");
+    }
+
     /**
-     * Refreshes the anomaly log with the supplied records.
+     * Replaces the anomaly log and notification list with the supplied records.
      *
      * @param theRecords anomaly records to display
      */
-    public void refreshAnomalyLog(
-            final List<AnomalyRecord> theRecords) {
-
+    public void refreshAnomalyLog(final List<AnomalyRecord> theRecords) {
+        final List<AnomalyRecord> myRecordSnapshot = theRecords == null
+                ? new ArrayList<>() : new ArrayList<>(theRecords);
         Runnable myUpdate = () -> {
             myAnomalyTableModel.setRowCount(0);
+            myAnomalyNotificationsList.removeAll();
 
-            if (theRecords != null) {
-                for (AnomalyRecord myRecord : theRecords) {
-                    myAnomalyTableModel.addRow(new Object[] {
-                            myRecord.getDroneId(),
-                            myRecord.getTimestamp().format(
-                                    DateTimeFormatter.ofPattern(
-                                            "yyyy-MM-dd HH:mm:ss")),
-                            myRecord.getAnomalyType(),
-                            myRecord.getDetails()
-                    });
+            for (AnomalyRecord myRecord : myRecordSnapshot) {
+                if (myRecord != null) {
+                    addAnomalyToTable(myRecord);
+                    addAnomalyNotification(myRecord);
                 }
             }
-
-            if (theRecords == null || theRecords.isEmpty()) {
-                myAnomalyNotificationLabel.setText(
-                        "No recent anomalies");
-            } else {
-                AnomalyRecord myLatestRecord =
-                        theRecords.get(theRecords.size() - 1);
-
-                myAnomalyNotificationLabel.setText(
-                        "<html><b>"
-                                + myLatestRecord.getAnomalyType()
-                                + ":</b> "
-                                + myLatestRecord.getDetails()
-                                + " (Drone: "
-                                + myLatestRecord.getDroneId()
-                                + ")</html>");
+            if (myAnomalyNotificationsList.getComponentCount() == 0) {
+                JLabel myEmptyLabel = new JLabel("No recent anomalies");
+                myEmptyLabel.setBorder(
+                        BorderFactory.createEmptyBorder(4, 6, 4, 6));
+                myAnomalyNotificationsList.add(myEmptyLabel);
             }
+            myAnomalyNotificationsList.revalidate();
+            myAnomalyNotificationsList.repaint();
         };
-
         if (SwingUtilities.isEventDispatchThread()) {
             myUpdate.run();
         } else {
