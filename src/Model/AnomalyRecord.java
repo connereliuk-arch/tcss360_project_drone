@@ -22,7 +22,7 @@ import java.time.LocalDateTime;
  */
 public record AnomalyRecord(String myDroneId,
                             TelemetryData myData,
-                            LocalDateTime myTimeStamp,
+                            LocalDateTime myTimestamp,
                             String myAnomalyType,
                             String myDetails)
 {}
