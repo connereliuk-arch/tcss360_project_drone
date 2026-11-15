@@ -231,9 +231,9 @@ public class AnomalyDetector {
         double deltaLon = lon2 - lon1;
 
         // Haversine formula
-        double a = Math.min(1.0, Math.sin(deltaLat / 2) * Math.sin(deltaLat / 2)
+        double a = Math.min(1.0, Math.max(0.0, Math.sin(deltaLat / 2) * Math.sin(deltaLat / 2)
                 + Math.cos(lat1) * Math.cos(lat2)
-                * Math.sin(deltaLon / 2) * Math.sin(deltaLon / 2));
+                * Math.sin(deltaLon / 2) * Math.sin(deltaLon / 2)));
 
         // Calculate distance in meters
         double earthRadius = 6371000;
