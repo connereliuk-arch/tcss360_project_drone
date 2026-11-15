@@ -66,10 +66,10 @@ public class AnomalyRepository {
         final String sql = "SELECT * FROM anomalies";
         final PreparedStatement statement = myDatabase.prepareStatement(sql);
         final ResultSet items = statement.executeQuery();
-        final LocalDateTime timestamp = LocalDateTime.parse(items.getString("time_stamp"));
-
 
         while (items.next()) {
+            final LocalDateTime timestamp = LocalDateTime.parse(items.getString("time_stamp"));
+
             final TelemetryData data = new TelemetryData(
                 items.getDouble("speed"),
                 items.getDouble("altitude"),
@@ -83,7 +83,7 @@ public class AnomalyRepository {
             anomalies.add(new AnomalyRecord(
                 items.getString("drone_id"),
                 data,
-                LocalDateTime.parse(items.getString("time_stamp")),
+                timestamp,
                 items.getString("anomaly_type"),
                 items.getString("details"))
             );
