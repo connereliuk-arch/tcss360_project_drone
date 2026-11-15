@@ -19,7 +19,7 @@ public class AnomalyRepository {
     }
 
     public void initializeDatabase() throws SQLException {
-        String sql = "CREATE TABLE IF NOT EXISTS anomalies ("
+        final String sql = "CREATE TABLE IF NOT EXISTS anomalies ("
                     + "anomaly_id INTEGER PRIMARY KEY AUTOINCREMENT,"
                     + "drone_id TEXT NOT NULL,"
                     + "anomaly_type TEXT NOT NULL,"
@@ -33,7 +33,7 @@ public class AnomalyRepository {
                     + "battery_level REAL NOT NULL)";
         myDatabase = DriverManager.getConnection(myDatabaseUrl);
 
-        PreparedStatement statement = myDatabase.prepareStatement(sql);
+        final PreparedStatement statement = myDatabase.prepareStatement(sql);
         statement.execute();
         statement.close();
     }
@@ -62,21 +62,22 @@ public class AnomalyRepository {
     }
 
     public List<AnomalyRecord> getAllAnomalies() throws SQLException {
-        List<AnomalyRecord> anomalies = new ArrayList<>();
+        final List<AnomalyRecord> anomalies = new ArrayList<>();
         final String sql = "SELECT * FROM anomalies";
-        PreparedStatement statement = myDatabase.prepareStatement(sql);
-        ResultSet items = statement.executeQuery();
+        final PreparedStatement statement = myDatabase.prepareStatement(sql);
+        final ResultSet items = statement.executeQuery();
+        final LocalDateTime timestamp = LocalDateTime.parse(items.getString("time_stamp"));
 
 
         while (items.next()) {
-            TelemetryData data = new TelemetryData(
+            final TelemetryData data = new TelemetryData(
                 items.getDouble("speed"),
                 items.getDouble("altitude"),
                 items.getDouble("gps_latitude"),
                 items.getDouble("gps_longitude"),
                 items.getDouble("orientation"),
                 items.getDouble("battery_level"),
-                items.getObject("time_stamp", LocalDateTime.class)
+                timestamp
             );
 
             anomalies.add(new AnomalyRecord(
