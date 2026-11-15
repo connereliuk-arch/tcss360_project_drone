@@ -254,6 +254,38 @@ class AnomalyDetectorTest {
         assertFalse(getAnomalyTypes(previous, current).contains("GPS_CHANGE"));
     }
 
+    @Test
+    void testGpsChangeUnderThreshold() {
+        TelemetryData previous = createTelemetry(30, 50, 47, 90, 80);
+        TelemetryData current = createTelemetry(30, 50, 47.000225, 90, 80);
+
+        assertFalse(getAnomalyTypes(previous, current).contains("GPS_CHANGE"));
+    }
+
+    @Test
+    void testGpsChangeAtThreshold() {
+        TelemetryData previous = createTelemetry(30, 50, 47, 90, 80);
+        TelemetryData current = createTelemetry(30, 50, 47.0004496608, 90, 80);
+
+        assertFalse(getAnomalyTypes(previous, current).contains("GPS_CHANGE"));
+    }
+
+    @Test
+    void testGpsChangeAboveThreshold() {
+        TelemetryData previous = createTelemetry(30, 50, 47, 90, 80);
+        TelemetryData current = createTelemetry(30, 50, 47.000460, 90, 80);
+
+        assertTrue(getAnomalyTypes(previous, current).contains("GPS_CHANGE"));
+    }
+
+    @Test
+    void testGpsLargeJump() {
+        TelemetryData previous = createTelemetry(30, 50, 47, 90, 80);
+        TelemetryData current = createTelemetry(30, 50, 48, 90, 80);
+
+        assertTrue(getAnomalyTypes(previous, current).contains("GPS_CHANGE"));
+    }
+
     // ------------------------------------------
     // checkTurnAngle()
     // ------------------------------------------
