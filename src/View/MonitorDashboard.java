@@ -415,11 +415,11 @@ public class MonitorDashboard extends JFrame {
                     myDroneCardsPanel.add(myLabels.getPanel());
                 }
                 myLabels.setMyDroneIdLabel(myDroneId);
-                myLabels.setMySpeedLabel(myData.getSpeed());
-                myLabels.setMyAltitudeLabel(myData.getAltitude());
-                myLabels.setMyLatitudeLabel(myData.getLatitude());
-                myLabels.setMyLongitudeLabel(myData.getLongitude());
-                myLabels.setMyBatteryLabel(myData.getBatteryLevel());
+                myLabels.setMySpeedLabel(myData.speed());
+                myLabels.setMyAltitudeLabel(myData.altitude());
+                myLabels.setMyLatitudeLabel(myData.latitude());
+                myLabels.setMyLongitudeLabel(myData.longitude());
+                myLabels.setMyBatteryLabel(myData.batteryLevel());
             }
             if (myDroneLabelMap.isEmpty()
                     && myDroneCardsPanel.getComponentCount() == 0) {
