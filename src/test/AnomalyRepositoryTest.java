@@ -334,12 +334,12 @@ class AnomalyRepositoryTest {
         TelemetryData retrieved =
                 anomalies.getFirst().myData();
 
-        assertEquals(30, retrieved.getSpeed());
-        assertEquals(50, retrieved.getAltitude());
-        assertEquals(47, retrieved.getLatitude());
-        assertEquals(90, retrieved.getLongitude());
-        assertEquals(80, retrieved.getOrientation());
-        assertEquals(75, retrieved.getBatteryLevel());
+        assertEquals(30, retrieved.speed());
+        assertEquals(50, retrieved.altitude());
+        assertEquals(47, retrieved.latitude());
+        assertEquals(90, retrieved.longitude());
+        assertEquals(80, retrieved.orientation());
+        assertEquals(75, retrieved.batteryLevel());
     }
 
     // ==========================================

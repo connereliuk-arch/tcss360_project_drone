@@ -85,7 +85,7 @@ public class AnomalyDetector {
         if (checkLowBattery(theCurrent)) {
             final String anomalyType = "LOW_BATTERY";
             final String details = "Battery has depleted below " + LOW_BATTERY_THRESHOLD + "%. Current battery level: "
-                                    + theCurrent.getBatteryLevel();
+                                    + theCurrent.batteryLevel();
 
             records.add(new AnomalyRecord(theDroneId, theCurrent, timestamp, anomalyType, details));
         }
@@ -94,7 +94,7 @@ public class AnomalyDetector {
         if (checkAltitudeChange(thePrevious, theCurrent)) {
             final String anomalyType = "ALTITUDE_CHANGE";
             final String details = "Altitude level has moved too fast from "
-                    + thePrevious.getAltitude() + " to " + theCurrent.getAltitude() + ".";
+                    + thePrevious.altitude() + " to " + theCurrent.altitude() + ".";
 
             records.add(new AnomalyRecord(theDroneId, theCurrent, timestamp, anomalyType, details));
         }
@@ -102,7 +102,7 @@ public class AnomalyDetector {
         if (checkAltitudeHeight(theCurrent)) {
             final String anomalyType = "DRONE_ALTITUDE";
             final String details = "The drones altitude has exceeded the maximum altitude. Current altitude: "
-                    + theCurrent.getAltitude();
+                    + theCurrent.altitude();
 
             records.add(new AnomalyRecord(theDroneId, theCurrent, timestamp, anomalyType, details));
         }
@@ -111,7 +111,7 @@ public class AnomalyDetector {
         if (checkSpeedChange(thePrevious, theCurrent)) {
             final String anomalyType = "SPEED_CHANGE";
             final String details = "Speed has changed too fast from "
-                    + thePrevious.getSpeed() + " to " + theCurrent.getSpeed() + ".";
+                    + thePrevious.speed() + " to " + theCurrent.speed() + ".";
 
             records.add(new AnomalyRecord(theDroneId, theCurrent, timestamp, anomalyType, details));
         }
@@ -120,7 +120,7 @@ public class AnomalyDetector {
         if (checkSpeed(theCurrent)) {
             final String anomalyType = "HIGH_SPEED";
             final String details = "Speed is too fast. Current speed: "
-                    + theCurrent.getSpeed() + ".";
+                    + theCurrent.speed() + ".";
 
             records.add(new AnomalyRecord(theDroneId, theCurrent, timestamp, anomalyType, details));
         }
@@ -128,8 +128,8 @@ public class AnomalyDetector {
         if (checkGpsChange(thePrevious, theCurrent)) {
             final String anomalyType = "GPS_CHANGE";
             final String details = "The GPS position has changed too much from ("
-                    + thePrevious.getLatitude() + ", " + thePrevious.getLongitude() + ") to ("
-                    + theCurrent.getLatitude() + ", " + theCurrent.getLongitude() + ").";
+                    + thePrevious.latitude() + ", " + thePrevious.longitude() + ") to ("
+                    + theCurrent.latitude() + ", " + theCurrent.longitude() + ").";
 
             records.add(new AnomalyRecord(theDroneId, theCurrent, timestamp, anomalyType, details));
         }
@@ -137,7 +137,7 @@ public class AnomalyDetector {
         if (checkTurnAngle(thePrevious, theCurrent)) {
             final String anomalyType = "TURN_ANGLE";
             final String details = "The drones turn angle has increased too much from "
-                    + thePrevious.getOrientation() + " to " + theCurrent.getOrientation() + ".";
+                    + thePrevious.orientation() + " to " + theCurrent.orientation() + ".";
 
             records.add(new AnomalyRecord(theDroneId, theCurrent, timestamp, anomalyType, details));
         }
@@ -154,7 +154,7 @@ public class AnomalyDetector {
      *         false otherwise
      */
     private boolean checkLowBattery(final TelemetryData theData) {
-        return theData.getBatteryLevel() <= LOW_BATTERY_THRESHOLD;
+        return theData.batteryLevel() <= LOW_BATTERY_THRESHOLD;
     }
 
     /**
@@ -168,7 +168,7 @@ public class AnomalyDetector {
      */
     private boolean checkAltitudeChange(final TelemetryData thePrevious,
                                      final TelemetryData theCurrent) {
-        return Math.abs(thePrevious.getAltitude() - theCurrent.getAltitude()) >= MAX_ALTITUDE_CHANGE;
+        return Math.abs(thePrevious.altitude() - theCurrent.altitude()) >= MAX_ALTITUDE_CHANGE;
     }
 
     /**
@@ -178,7 +178,7 @@ public class AnomalyDetector {
      * @return true if the drones altitude rises above the limit; false otherwise
      */
     private boolean checkAltitudeHeight(final TelemetryData theCurrent) {
-        return theCurrent.getAltitude() > MAX_ALTITUDE;
+        return theCurrent.altitude() > MAX_ALTITUDE;
     }
 
     /**
@@ -193,7 +193,7 @@ public class AnomalyDetector {
     // Returns true when speed changed by 20 mph or more
     private boolean checkSpeedChange(final TelemetryData thePrevious,
                                      final TelemetryData theCurrent) {
-        return Math.abs(thePrevious.getSpeed() - theCurrent.getSpeed()) >= MAX_SPEED_CHANGE;
+        return Math.abs(thePrevious.speed() - theCurrent.speed()) >= MAX_SPEED_CHANGE;
     }
 
     /**
@@ -203,7 +203,7 @@ public class AnomalyDetector {
      * @return true if the drones speed is faster than 60 mph; false otherwise
      */
     private boolean checkSpeed(final TelemetryData theCurrent) {
-        return theCurrent.getSpeed() > MAX_SPEED;
+        return theCurrent.speed() > MAX_SPEED;
     }
 
     /**
@@ -215,10 +215,10 @@ public class AnomalyDetector {
      */
     private double calculateDistance(final TelemetryData thePrevious,
                                   final TelemetryData theCurrent) {
-        double lat1 = thePrevious.getLatitude();
-        double lon1 = thePrevious.getLongitude();
-        double lat2 = theCurrent.getLatitude();
-        double lon2 = theCurrent.getLongitude();
+        double lat1 = thePrevious.latitude();
+        double lon1 = thePrevious.longitude();
+        double lat2 = theCurrent.latitude();
+        double lon2 = theCurrent.longitude();
 
         // Convert degrees to radians
         lat1 = Math.toRadians(lat1);
@@ -266,7 +266,7 @@ public class AnomalyDetector {
      */
     private boolean checkTurnAngle(final TelemetryData thePrevious,
                                   final TelemetryData theCurrent) {
-        return Math.abs(theCurrent.getOrientation() - thePrevious.getOrientation()) > MAX_TURN_ANGLE;
+        return Math.abs(theCurrent.orientation() - thePrevious.orientation()) > MAX_TURN_ANGLE;
 
     }
 }

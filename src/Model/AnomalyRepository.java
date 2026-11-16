@@ -48,12 +48,12 @@ public class AnomalyRepository {
         statement.setString(2, theAnomaly.myAnomalyType());
         statement.setString(3, theAnomaly.myDetails());
         statement.setString(4, theAnomaly.myTimestamp().toString());
-        statement.setDouble(5, theAnomaly.myData().getSpeed());
-        statement.setDouble(6, theAnomaly.myData().getAltitude());
-        statement.setDouble(7, theAnomaly.myData().getLatitude());
-        statement.setDouble(8, theAnomaly.myData().getLongitude());
-        statement.setDouble(9, theAnomaly.myData().getOrientation());
-        statement.setDouble(10, theAnomaly.myData().getBatteryLevel());
+        statement.setDouble(5, theAnomaly.myData().speed());
+        statement.setDouble(6, theAnomaly.myData().altitude());
+        statement.setDouble(7, theAnomaly.myData().latitude());
+        statement.setDouble(8, theAnomaly.myData().longitude());
+        statement.setDouble(9, theAnomaly.myData().orientation());
+        statement.setDouble(10, theAnomaly.myData().batteryLevel());
 
         final int rowsAffected = statement.executeUpdate();
         statement.close();
