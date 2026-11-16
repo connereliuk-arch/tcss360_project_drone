@@ -481,8 +481,8 @@ public class MonitorDashboard extends JFrame {
     private void addAnomalyToTable(final AnomalyRecord theRecord) {
         myAnomalyTableModel.addRow(new Object[] {
                 theRecord.myDroneId(),
-                theRecord.myTimeStamp() == null ? "" :
-                        theRecord.myTimeStamp().format(myAnomalyTimeFormatter),
+                theRecord.myTimestamp() == null ? "" :
+                        theRecord.myTimestamp().format(myAnomalyTimeFormatter),
                 theRecord.myAnomalyType(),
                 theRecord.myDetails()
         });
@@ -490,8 +490,8 @@ public class MonitorDashboard extends JFrame {
 
     /** Adds a visible notification for one anomaly. */
     private void addAnomalyNotification(final AnomalyRecord theRecord) {
-        String myTimestamp = theRecord.myTimeStamp() == null ? "Unknown time"
-                : theRecord.myTimeStamp().format(myAnomalyTimeFormatter);
+        String myTimestamp = theRecord.myTimestamp() == null ? "Unknown time"
+                : theRecord.myTimestamp().format(myAnomalyTimeFormatter);
         String myMessage = "<html><b>" + escapeHtml(theRecord.myAnomalyType())
                 + "</b> — " + escapeHtml(theRecord.myDetails())
                 + " (Drone: " + escapeHtml(theRecord.myDroneId())
