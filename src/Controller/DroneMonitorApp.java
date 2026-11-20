@@ -2,6 +2,7 @@ package Controller;
 import Model.*;
 import View.*;
 
+import java.sql.SQLException;
 import java.util.*;
 
 /**
@@ -18,7 +19,7 @@ public class DroneMonitorApp {
      * Currently, this initializes all classes and whatnot then starts a loop for the display.
      *
      */
-    static void main() throws InterruptedException {
+    static void main() throws InterruptedException, SQLException {
         // Initialize all the stuff that we will be using
         MonitorDashboard DashBoard = new MonitorDashboard();
         // Initializing drones list as 3 drones
@@ -42,11 +43,11 @@ public class DroneMonitorApp {
         TelemetryGenerator TeleGen = new TelemetryGenerator(random);
         AnomalyDetector AnomDetector = new AnomalyDetector();
 
-        // TODO make an actual database for AnomRepo to connect to
-        //  so we can properly be logging things.
-//        AnomalyRepository AnomRepo = new AnomalyRepository();
 
-        // Create the controller and hand it the classes we made
+        AnomalyRepository AnomRepo = new AnomalyRepository("jdbc:sqlite:drone_monitor.db");
+        AnomRepo.initializeDatabase();
+
+        // Create the controller and hand it the classes we made.
         DroneMonitorController Controller = new DroneMonitorController(
                 DashBoard, drones, TeleGen, AnomDetector, random
         );
@@ -81,6 +82,10 @@ public class DroneMonitorApp {
 
                 // Have dashboard show the new anomalies.
                 DashBoard.refreshAnomalyLog(anomalies);
+                for (AnomalyRecord anomaly : anomalies) {
+                    AnomRepo.saveAnomaly(anomaly);
+                }
+
 
                 // Give DashBoard the new data
                 DashBoard.updateDroneTelemetry(droneDataMap);
