@@ -80,8 +80,10 @@ public class DroneMonitorApp {
                 }
 
 
-                // Have dashboard show the new anomalies.
-                DashBoard.refreshAnomalyLog(anomalies);
+                // Have dashboard show the new anomalies if there are any.
+                if (!anomalies.isEmpty()) {
+                    DashBoard.refreshAnomalyLog(anomalies);
+                }
                 for (AnomalyRecord anomaly : anomalies) {
                     AnomRepo.saveAnomaly(anomaly);
                 }
