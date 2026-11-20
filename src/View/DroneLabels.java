@@ -17,6 +17,7 @@ public class DroneLabels {
     private final JLabel myLatitudeLabel;
     private final JLabel myLongitudeLabel;
     private final JLabel myBatteryLabel;
+    private final JLabel myOrientationLabel;
 
     /** Creates a complete set of initialized labels for one drone. */
     public DroneLabels() {
@@ -31,6 +32,7 @@ public class DroneLabels {
         myLatitudeLabel = createLabel("Latitude: --", Font.PLAIN);
         myLongitudeLabel = createLabel("Longitude: --", Font.PLAIN);
         myBatteryLabel = createLabel("Battery: --", Font.PLAIN);
+        myOrientationLabel = createLabel("Orientation: --", Font.PLAIN);
 
         myPanel.add(myDroneIdLabel);
         myPanel.add(mySpeedLabel);
@@ -38,6 +40,7 @@ public class DroneLabels {
         myPanel.add(myLatitudeLabel);
         myPanel.add(myLongitudeLabel);
         myPanel.add(myBatteryLabel);
+        myPanel.add(myOrientationLabel);
     }
 
     private JLabel createLabel(final String theText, final int theStyle) {
@@ -76,6 +79,12 @@ public class DroneLabels {
         myBatteryLabel.setText(String.format("Battery: %.0f%%", theBattery));
     }
 
+    /** Updates the drone's clockwise heading, where zero degrees is north. */
+    public void setMyOrientationLabel(final double theOrientation) {
+        myOrientationLabel.setText(String.format(
+                "Orientation: %.1f°", theOrientation));
+    }
+
     // Getters for drone labels.
     public JLabel getMyDroneIdLabel() { return myDroneIdLabel; }
     public JLabel getMySpeedLabel() { return mySpeedLabel; }
@@ -83,4 +92,5 @@ public class DroneLabels {
     public JLabel getMyLatitudeLabel() { return myLatitudeLabel; }
     public JLabel getMyLongitudeLabel() { return myLongitudeLabel; }
     public JLabel getMyBatteryLabel() { return myBatteryLabel; }
+    public JLabel getMyOrientationLabel() { return myOrientationLabel; }
 }
