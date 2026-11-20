@@ -45,6 +45,17 @@ public class Drone {
         this.telemetry = data;
     } // end of Drone
 
+    /**
+     * Constructor used for making shallow copy.
+     * Technically they end up sharing a {@link TelemetryData} but since those are records and therefor immutable, that's probably fine.
+     * @param other Drone to copy.
+     */
+    public Drone (final Drone other) {
+        this.droneId = other.droneId;
+        this.telemetry = other.telemetry;
+    }
+
+
     public boolean updateTelemetry(final TelemetryData data) {
         if (!isValidTelemetry(data)) {
             return false;
