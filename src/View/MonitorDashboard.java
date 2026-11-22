@@ -77,6 +77,10 @@ public class MonitorDashboard extends JFrame {
     private final DateTimeFormatter myAnomalyTimeFormatter =
             DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
 
+    // Retain every anomaly received by the dashboard for its lifetime.
+    private final java.util.LinkedHashSet<AnomalyRecord> myAnomalyRecords =
+            new java.util.LinkedHashSet<>();
+
     private JButton myMenuButton;
     private JPopupMenu myMenu;
 
@@ -503,16 +507,9 @@ public class MonitorDashboard extends JFrame {
             return;
         }
         Runnable myUpdate = () -> {
-            if (myAnomalyNotificationsList.getComponentCount() == 1
-                    && myAnomalyNotificationsList.getComponent(0) instanceof JLabel
-                    && "No recent anomalies".equals(
-                    ((JLabel) myAnomalyNotificationsList.getComponent(0)).getText())) {
-                myAnomalyNotificationsList.removeAll();
+            if (myAnomalyRecords.add(theRecord)) {
+                rebuildAnomalyDisplay();
             }
-            addAnomalyNotification(theRecord);
-            addAnomalyToTable(theRecord);
-            myAnomalyNotificationsList.revalidate();
-            myAnomalyNotificationsList.repaint();
         };
         if (SwingUtilities.isEventDispatchThread()) {
             myUpdate.run();
@@ -570,29 +567,40 @@ public class MonitorDashboard extends JFrame {
         final List<AnomalyRecord> myRecordSnapshot = theRecords == null
                 ? new ArrayList<>() : new ArrayList<>(theRecords);
         Runnable myUpdate = () -> {
-            myAnomalyTableModel.setRowCount(0);
-            myAnomalyNotificationsList.removeAll();
-
+            // Merge incoming records with the existing history instead of
+            // clearing the display when the caller supplies only recent data.
             for (AnomalyRecord myRecord : myRecordSnapshot) {
                 if (myRecord != null) {
-                    addAnomalyToTable(myRecord);
-                    addAnomalyNotification(myRecord);
+                    myAnomalyRecords.add(myRecord);
                 }
             }
-            if (myAnomalyNotificationsList.getComponentCount() == 0) {
-                JLabel myEmptyLabel = new JLabel("No recent anomalies");
-                myEmptyLabel.setBorder(
-                        BorderFactory.createEmptyBorder(4, 6, 4, 6));
-                myAnomalyNotificationsList.add(myEmptyLabel);
-            }
-            myAnomalyNotificationsList.revalidate();
-            myAnomalyNotificationsList.repaint();
+            rebuildAnomalyDisplay();
         };
         if (SwingUtilities.isEventDispatchThread()) {
             myUpdate.run();
         } else {
             SwingUtilities.invokeLater(myUpdate);
         }
+    }
+
+    /** Rebuilds both anomaly views from the retained AnomalyRecord history. */
+    private void rebuildAnomalyDisplay() {
+        myAnomalyTableModel.setRowCount(0);
+        myAnomalyNotificationsList.removeAll();
+
+        for (AnomalyRecord myRecord : myAnomalyRecords) {
+            addAnomalyToTable(myRecord);
+            addAnomalyNotification(myRecord);
+        }
+
+        if (myAnomalyNotificationsList.getComponentCount() == 0) {
+            JLabel myEmptyLabel = new JLabel("No recent anomalies");
+            myEmptyLabel.setBorder(
+                    BorderFactory.createEmptyBorder(4, 6, 4, 6));
+            myAnomalyNotificationsList.add(myEmptyLabel);
+        }
+        myAnomalyNotificationsList.revalidate();
+        myAnomalyNotificationsList.repaint();
     }
 
     /**
