@@ -24,6 +24,7 @@ import java.util.List;
  * @see TelemetryData
  * @see AnomalyRecord
  */
+@Deprecated
 public class AnomalyDetector {
     /**
      * Lower battery percent limit
