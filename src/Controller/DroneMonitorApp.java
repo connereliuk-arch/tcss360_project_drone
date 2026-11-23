@@ -47,10 +47,6 @@ public class DroneMonitorApp {
         AnomalyRepository AnomRepo = new AnomalyRepository("jdbc:sqlite:drone_monitor.db");
         AnomRepo.initializeDatabase();
 
-        // Create the controller and hand it the classes we made.
-        DroneMonitorController Controller = new DroneMonitorController(
-                DashBoard, drones, TeleGen, AnomDetector, random
-        );
         DashBoard.display();
         DashBoard.updateDroneTelemetry(droneDataMap);
 
@@ -67,7 +63,7 @@ public class DroneMonitorApp {
                     Drone drone = drones.get(i);
                     Drone oldDrone = oldDrones.get(i);
 
-                    TelemetryData newData = Controller.updateDrone(drone);
+                    TelemetryData newData = updateDrone(drone, TeleGen, random);
                     // Replace the data corresponding to the droneID in droneDataMap
                     // This should also add any new drones to the map
                     droneDataMap.put(drone.getDroneId(), newData);
@@ -98,7 +94,7 @@ public class DroneMonitorApp {
                 System.out.println(droneDataMap);
                 // Currently using Thread.sleep because it's the simplest but will look into alternatives.
                 // TODO Look into alternative ways to cause delays between loop iterations.
-                Thread.sleep(500);
+                Thread.sleep(2000);
             } catch (InterruptedException e) {
                 throw new InterruptedException("a");
             }
@@ -107,6 +103,22 @@ public class DroneMonitorApp {
 
 
 
+
+    }
+
+    /**
+     * Updates the given {@link Drone}.
+     * @return {@link TelemetryData} that has the new data and also possible GPS spoofing.
+     */
+    static public TelemetryData updateDrone(final Drone theDrone, final TelemetryGenerator theTeleGen, final Random theRandom) {
+        String ID = theDrone.getDroneId();
+        TelemetryData oldData = theDrone.getData();
+        TelemetryData newData = theTeleGen.generateTelemetry(oldData);
+        theDrone.updateTelemetry(newData);
+        // Random chance for GPS spoofing
+        final int gpsChance = theRandom.nextInt(99) + 1;
+        newData = theTeleGen.gpsSpoofer(newData, gpsChance);
+        return newData;
 
     }
 
