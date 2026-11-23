@@ -40,21 +40,17 @@ public class Drone {
                 START_BATTERY, LocalDateTime.now());
     } // end of Drone
 
-    public Drone(final String droneId, final TelemetryData data) {
-        this.droneId = droneId;
-        this.telemetry = data;
-    } // end of Drone
-
     /**
-     * Constructor used for making shallow copy.
-     * Technically they end up sharing a {@link TelemetryData} but since those are records and therefor immutable, that's probably fine.
+     * Constructor used for making a shallow copy.
+     * Technically they end up sharing a {@link TelemetryData}, but since those are
+     * records and therefore immutable, that's fine.
+     *
      * @param other Drone to copy.
      */
-    public Drone (final Drone other) {
+    public Drone(final Drone other) {
         this.droneId = other.droneId;
         this.telemetry = other.telemetry;
-    }
-
+    } // end of Drone
 
     public boolean updateTelemetry(final TelemetryData data) {
         if (!isValidTelemetry(data)) {

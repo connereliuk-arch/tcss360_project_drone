@@ -5,7 +5,8 @@ import java.util.Random;
 
 public class TelemetryGenerator {
 
-    private static final double SECONDS_PER_UPDATE = 1.0;
+    // Matches the Thread.sleep(500) in DroneMonitorApp
+    private static final double SECONDS_PER_UPDATE = 0.5;
     private static final double MPS_PER_MPH = 0.44704;
     private static final double METERS_PER_DEGREE = 111_320.0;
     private static final double FULL_CIRCLE = 360.0;
@@ -17,18 +18,19 @@ public class TelemetryGenerator {
     private static final double NORMAL_MAX_ALTITUDE = 110.0;
     private static final double BATTERY_DRAIN = 0.5;
 
-    private static final double ANOMALY_CHANCE = 0.05;
+    private static final double ANOMALY_CHANCE = 0.01;
     private static final double ANOMALY_MARGIN = 5.0;
     private static final int ANOMALY_TYPES = 3;
 
-    // TODO Copies of AnomalyDetector's values since those are private right now.
+    private static final double MAX_ALTITUDE_CHANGE = 10.0;
     private static final double MAX_TURN_ANGLE = 45.0;
     private static final double MAX_SPEED_CHANGE = 20.0;
+    private static final double MAX_GPS_CHANGE = 50.0;
 
-    private static final int SPOOF_MIN_CHANCE = 82;
-    private static final int SPOOF_ALTITUDE_MAX_CHANCE = 88;
-    private static final int SPOOF_LATITUDE_MAX_CHANCE = 94;
-    private static final double GPS_SPOOF_DISTANCE = 2 * AnomalyDetector.MAX_GPS_THRESHOLD;
+    private static final int SPOOF_MIN_CHANCE = 97;
+    private static final int SPOOF_ALTITUDE_MAX_CHANCE = 97;
+    private static final int SPOOF_LATITUDE_MAX_CHANCE = 98;
+    private static final double GPS_SPOOF_DISTANCE = 2 * MAX_GPS_CHANGE;
 
     /** Shared Random passed in from the controller. */
     private final Random random;
@@ -68,8 +70,8 @@ public class TelemetryGenerator {
     } // end of generateTelemetry
 
     public TelemetryData gpsSpoofer(final TelemetryData data, final int chance) {
-        // Only spoofs if chance is 82 or higher, otherwise the data stays the same.
-        // TODO Discuss having the >= 82 check outside the method, to decide if it's called at all.
+        // Only spoofs if chance is 97 or higher, otherwise the data stays the same.
+        // TODO Discuss having the >= 97 check outside the method, to decide if it's called at all.
         if (chance < SPOOF_MIN_CHANCE) {
             return data;
         }
@@ -79,13 +81,13 @@ public class TelemetryGenerator {
         double longitude = data.longitude();
 
         if (chance <= SPOOF_ALTITUDE_MAX_CHANCE) {
-            // Chance between 82 and 88 results in altitude spoof
-            altitude += randomSign() * (AnomalyDetector.MAX_ALTITUDE_CHANGE + ANOMALY_MARGIN);
+            // Chance of 97 results in altitude spoof
+            altitude += randomSign() * (MAX_ALTITUDE_CHANGE + ANOMALY_MARGIN);
         } else if (chance <= SPOOF_LATITUDE_MAX_CHANCE) {
-            // Chance between 89 and 94 results in latitude spoof
+            // Chance of 98 results in latitude spoof
             latitude += randomSign() * GPS_SPOOF_DISTANCE / METERS_PER_DEGREE;
         } else {
-            // Chance between 95 and 100 results in longitude spoof
+            // Chance of 99 results in longitude spoof
             longitude += randomSign() * GPS_SPOOF_DISTANCE
                     / (METERS_PER_DEGREE * Math.cos(Math.toRadians(latitude)));
         }
@@ -112,7 +114,7 @@ public class TelemetryGenerator {
     } // end of move
 
     private double makeAltitudeAnomaly(final double altitude) {
-        final double change = AnomalyDetector.MAX_ALTITUDE_CHANGE + ANOMALY_MARGIN;
+        final double change = MAX_ALTITUDE_CHANGE + ANOMALY_MARGIN;
         // Drop if there's room, otherwise jump up (still gets flagged)
         if (altitude - change >= 0) {
             return altitude - change;
