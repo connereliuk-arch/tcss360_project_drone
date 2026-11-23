@@ -85,12 +85,4 @@ public class DroneLabels {
                 "Orientation: %.2f°", theOrientation));
     }
 
-    // Getters for drone labels.
-    public JLabel getMyDroneIdLabel() { return myDroneIdLabel; }
-    public JLabel getMySpeedLabel() { return mySpeedLabel; }
-    public JLabel getMyAltitudeLabel() { return myAltitudeLabel; }
-    public JLabel getMyLatitudeLabel() { return myLatitudeLabel; }
-    public JLabel getMyLongitudeLabel() { return myLongitudeLabel; }
-    public JLabel getMyBatteryLabel() { return myBatteryLabel; }
-    public JLabel getMyOrientationLabel() { return myOrientationLabel; }
 }

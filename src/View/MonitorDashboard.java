@@ -1,6 +1,7 @@
 package View;
 
-import Model.*;
+import Model.AnomalyRecord;
+import Model.TelemetryData;
 
 import java.awt.BorderLayout;
 import java.awt.Color;
@@ -148,23 +149,11 @@ public class MonitorDashboard extends JFrame {
      * Creates the map and drone information sections.
      */
     private void createMainDisplay() {
-        JPanel myContentPanel = new JPanel(new GridBagLayout());
-
-        GridBagConstraints myConstraints = new GridBagConstraints();
-        myConstraints.fill = GridBagConstraints.BOTH;
-        myConstraints.insets = new Insets(5, 5, 5, 5);
-        myConstraints.weighty = 1.0;
-
         // OpenStreetMap is rendered directly inside Swing; no browser is required.
         myMapPanel = new JPanel(new BorderLayout());
         myMapPanel.setBorder(BorderFactory.createTitledBorder("Live Drone Map"));
         myOsmMapPanel = new OsmMapPanel();
         myMapPanel.add(myOsmMapPanel, BorderLayout.CENTER);
-
-        myConstraints.gridx = 0;
-        myConstraints.gridy = 0;
-        myConstraints.weightx = 0.65;
-        myContentPanel.add(myMapPanel, myConstraints);
 
         // Scrollable grid containing one telemetry card for every drone.
         myDroneInfoPanel = new JPanel(new BorderLayout());
@@ -179,13 +168,6 @@ public class MonitorDashboard extends JFrame {
         myDroneScrollPane.setVerticalScrollBarPolicy(
                 JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED);
         myDroneInfoPanel.add(myDroneScrollPane, BorderLayout.CENTER);
-
-        myConstraints.gridx = 1;
-        myConstraints.weightx = 0.35;
-        myContentPanel.add(myDroneInfoPanel, myConstraints);
-
-        // The map and drone information panels are placed together inside
-        // the Map View tab in createBottomTabs().
     }
 
     /**
@@ -347,7 +329,6 @@ public class MonitorDashboard extends JFrame {
 
         JMenuItem myPauseItem = new JMenuItem("Pause Monitoring");
         JMenuItem mySelectDroneItem = new JMenuItem("Select Drone");
-        JMenuItem mySettingsItem = new JMenuItem("Dashboard Settings");
         JMenuItem myExitItem = new JMenuItem("Exit");
 
         myPauseItem.addActionListener(theEvent -> {
@@ -382,14 +363,6 @@ public class MonitorDashboard extends JFrame {
             }
         });
 
-        mySettingsItem.addActionListener(theEvent -> {
-            JOptionPane.showMessageDialog(
-                    this,
-                    "Dashboard settings will be implemented later.",
-                    "Dashboard Settings",
-                    JOptionPane.INFORMATION_MESSAGE);
-        });
-
         myExitItem.addActionListener(theEvent -> {
             int myChoice = JOptionPane.showConfirmDialog(
                     this,
@@ -405,7 +378,6 @@ public class MonitorDashboard extends JFrame {
 
         myMenu.add(myPauseItem);
         myMenu.add(mySelectDroneItem);
-        myMenu.add(mySettingsItem);
         myMenu.addSeparator();
         myMenu.add(myExitItem);
 
@@ -496,26 +468,6 @@ public class MonitorDashboard extends JFrame {
             myDroneCardsPanel.repaint();
         };
 
-        if (SwingUtilities.isEventDispatchThread()) {
-            myUpdate.run();
-        } else {
-            SwingUtilities.invokeLater(myUpdate);
-        }
-    }
-
-    /**
-     * Placeholder for updating a drone's location on the map.
-     *
-     * @param theData telemetry data containing the drone's location
-     * @param theDroneID identifier of the drone
-     */
-    public void updateMap(
-            final TelemetryData theData,
-            final String theDroneID) {
-        if (theData == null || theDroneID == null) {
-            return;
-        }
-        Runnable myUpdate = () -> myOsmMapPanel.updateDrone(theDroneID, theData);
         if (SwingUtilities.isEventDispatchThread()) {
             myUpdate.run();
         } else {
