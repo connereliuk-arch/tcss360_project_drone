@@ -68,11 +68,11 @@ public class DroneLabels {
     }
 
     public void setMyLatitudeLabel(final double theLatitude) {
-        myLatitudeLabel.setText(String.format("Latitude: %.5f", theLatitude));
+        myLatitudeLabel.setText(String.format("Latitude: %.2f", theLatitude));
     }
 
     public void setMyLongitudeLabel(final double theLongitude) {
-        myLongitudeLabel.setText(String.format("Longitude: %.5f", theLongitude));
+        myLongitudeLabel.setText(String.format("Longitude: %.2f", theLongitude));
     }
 
     public void setMyBatteryLabel(final double theBattery) {
@@ -82,7 +82,7 @@ public class DroneLabels {
     /** Updates the drone's clockwise heading, where zero degrees is north. */
     public void setMyOrientationLabel(final double theOrientation) {
         myOrientationLabel.setText(String.format(
-                "Orientation: %.1f°", theOrientation));
+                "Orientation: %.2f°", theOrientation));
     }
 
     // Getters for drone labels.

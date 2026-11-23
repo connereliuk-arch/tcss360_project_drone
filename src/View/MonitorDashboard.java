@@ -5,6 +5,7 @@ import Model.*;
 import java.awt.BorderLayout;
 import java.awt.Color;
 import java.awt.Dimension;
+import java.awt.Component;
 import java.awt.Font;
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
@@ -32,6 +33,9 @@ import java.util.Map;
 import java.util.LinkedHashMap;
 import java.util.ArrayList;
 import java.util.regex.Pattern;
+import java.util.regex.Matcher;
+import java.math.BigDecimal;
+import java.math.RoundingMode;
 
 import javax.swing.BorderFactory;
 import javax.swing.JButton;
@@ -45,10 +49,12 @@ import javax.swing.JScrollPane;
 import javax.swing.JTabbedPane;
 import javax.swing.JTable;
 import javax.swing.JTextField;
+import javax.swing.JTextArea;
 import javax.swing.RowFilter;
 import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
 import javax.swing.table.TableRowSorter;
+import javax.swing.table.TableCellRenderer;
 import javax.swing.SwingConstants;
 import javax.swing.SwingUtilities;
 import javax.swing.Timer;
@@ -86,6 +92,9 @@ public class MonitorDashboard extends JFrame {
 
     // The dashboard exposes this state so the monitoring loop can pause/resume.
     private volatile boolean myMonitoringPaused;
+    private volatile Map<String, TelemetryData> myPendingTelemetry;
+    private final List<AnomalyRecord> myPendingAnomalies = new ArrayList<>();
+    private final Object myPendingUpdatesLock = new Object();
 
     /**
      * Creates the drone monitoring dashboard.
@@ -250,6 +259,22 @@ public class MonitorDashboard extends JFrame {
 
         myAnomalyTable = new JTable(myAnomalyTableModel);
         myAnomalyTable.setFillsViewportHeight(true);
+        // Keep column widths at their preferred sizes so wide data can be
+        // viewed by scrolling horizontally instead of being compressed.
+        myAnomalyTable.setAutoResizeMode(JTable.AUTO_RESIZE_OFF);
+        myAnomalyTable.getColumnModel().getColumn(0).setPreferredWidth(110);
+        myAnomalyTable.getColumnModel().getColumn(1).setPreferredWidth(190);
+        myAnomalyTable.getColumnModel().getColumn(2).setPreferredWidth(180);
+        myAnomalyTable.getColumnModel().getColumn(3).setPreferredWidth(500);
+        // Render the full details text on multiple lines instead of truncating it.
+        myAnomalyTable.getColumnModel().getColumn(3).setCellRenderer(
+                new AnomalyDetailsRenderer());
+        myAnomalyTable.addComponentListener(new java.awt.event.ComponentAdapter() {
+            @Override
+            public void componentResized(final java.awt.event.ComponentEvent theEvent) {
+                updateAnomalyRowHeights();
+            }
+        });
         myAnomalyTableSorter = new TableRowSorter<>(myAnomalyTableModel);
         myAnomalyTable.setRowSorter(myAnomalyTableSorter);
 
@@ -289,8 +314,13 @@ public class MonitorDashboard extends JFrame {
         mySearchPanel.add(myAnomalySearchField, BorderLayout.CENTER);
         mySearchPanel.setBorder(BorderFactory.createEmptyBorder(6, 6, 6, 6));
         myAnomalyLogPanel.add(mySearchPanel, BorderLayout.NORTH);
+        JScrollPane myAnomalyTableScrollPane = new JScrollPane(myAnomalyTable);
+        myAnomalyTableScrollPane.setHorizontalScrollBarPolicy(
+                JScrollPane.HORIZONTAL_SCROLLBAR_AS_NEEDED);
+        myAnomalyTableScrollPane.setVerticalScrollBarPolicy(
+                JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED);
         myAnomalyLogPanel.add(
-                new JScrollPane(myAnomalyTable), BorderLayout.CENTER);
+                myAnomalyTableScrollPane, BorderLayout.CENTER);
 
         myTabbedPane.addTab("Map View", myMapViewPanel);
         myTabbedPane.addTab("Anomaly Log", myAnomalyLogPanel);
@@ -327,10 +357,8 @@ public class MonitorDashboard extends JFrame {
                 myPauseItem.setText("Resume Monitoring");
             } else {
                 myPauseItem.setText("Pause Monitoring");
+                applyPendingUpdates();
             }
-
-            // The application loop reads isMonitoringPaused() and suspends work
-            // until this flag becomes false.
         });
 
         mySelectDroneItem.addActionListener(theEvent -> {
@@ -371,6 +399,7 @@ public class MonitorDashboard extends JFrame {
 
             if (myChoice == JOptionPane.YES_OPTION) {
                 dispose();
+                System.exit(0);
             }
         });
 
@@ -403,7 +432,15 @@ public class MonitorDashboard extends JFrame {
         // Snapshot the map so the Swing update is not affected by caller changes.
         final Map<String, TelemetryData> myTelemetrySnapshot =
                 new LinkedHashMap<>(theDrones);
+        if (myMonitoringPaused) {
+            myPendingTelemetry = myTelemetrySnapshot;
+            return;
+        }
         Runnable myUpdate = () -> {
+            if (myMonitoringPaused) {
+                myPendingTelemetry = myTelemetrySnapshot;
+                return;
+            }
             // Keep the map markers synchronized with the same telemetry snapshot
             // used to update the drone information cards.
             myOsmMapPanel.setDroneTelemetry(myTelemetrySnapshot);
@@ -486,6 +523,25 @@ public class MonitorDashboard extends JFrame {
         }
     }
 
+    /** Applies the most recent telemetry and all anomalies received while paused. */
+    private void applyPendingUpdates() {
+        final Map<String, TelemetryData> myTelemetryToApply = myPendingTelemetry;
+        myPendingTelemetry = null;
+
+        final List<AnomalyRecord> myAnomaliesToApply;
+        synchronized (myPendingUpdatesLock) {
+            myAnomaliesToApply = new ArrayList<>(myPendingAnomalies);
+            myPendingAnomalies.clear();
+        }
+
+        if (myTelemetryToApply != null) {
+            updateDroneTelemetry(myTelemetryToApply);
+        }
+        if (!myAnomaliesToApply.isEmpty()) {
+            refreshAnomalyLog(myAnomaliesToApply);
+        }
+    }
+
     /**
      * Returns whether the user has paused monitoring in the dashboard.
      * The application monitoring loop must check this value before generating
@@ -506,7 +562,19 @@ public class MonitorDashboard extends JFrame {
         if (theRecord == null) {
             return;
         }
+        if (myMonitoringPaused) {
+            synchronized (myPendingUpdatesLock) {
+                myPendingAnomalies.add(theRecord);
+            }
+            return;
+        }
         Runnable myUpdate = () -> {
+            if (myMonitoringPaused) {
+                synchronized (myPendingUpdatesLock) {
+                    myPendingAnomalies.add(theRecord);
+                }
+                return;
+            }
             if (myAnomalyRecords.add(theRecord)) {
                 rebuildAnomalyDisplay();
             }
@@ -525,8 +593,76 @@ public class MonitorDashboard extends JFrame {
                 theRecord.myTimestamp() == null ? "" :
                         theRecord.myTimestamp().format(myAnomalyTimeFormatter),
                 theRecord.myAnomalyType(),
-                theRecord.myDetails()
+                formatAnomalyDetails(theRecord.myDetails())
         });
+        updateAnomalyRowHeights();
+    }
+
+    /** Calculates row heights so wrapped anomaly details remain fully visible. */
+    private void updateAnomalyRowHeights() {
+        if (myAnomalyTable == null || myAnomalyTable.getColumnCount() < 4) {
+            return;
+        }
+        final int myDetailsWidth = Math.max(1,
+                myAnomalyTable.getColumnModel().getColumn(3).getWidth());
+        for (int myRow = 0; myRow < myAnomalyTable.getRowCount(); myRow++) {
+            final Object myValue = myAnomalyTable.getValueAt(myRow, 3);
+            final JTextArea myTextArea = new JTextArea(
+                    myValue == null ? "" : myValue.toString());
+            myTextArea.setFont(myAnomalyTable.getFont());
+            myTextArea.setLineWrap(true);
+            myTextArea.setWrapStyleWord(true);
+            myTextArea.setSize(myDetailsWidth, Short.MAX_VALUE);
+            final int myHeight = Math.max(myAnomalyTable.getRowHeight(),
+                    myTextArea.getPreferredSize().height + 8);
+            myAnomalyTable.setRowHeight(myRow, myHeight);
+        }
+    }
+
+    /** Multiline renderer for the anomaly Details column. */
+    private static class AnomalyDetailsRenderer extends JTextArea
+            implements TableCellRenderer {
+        private AnomalyDetailsRenderer() {
+            setLineWrap(true);
+            setWrapStyleWord(true);
+            setOpaque(true);
+        }
+
+        @Override
+        public Component getTableCellRendererComponent(
+                final JTable theTable, final Object theValue,
+                final boolean theIsSelected, final boolean theHasFocus,
+                final int theRow, final int theColumn) {
+            setText(theValue == null ? "" : theValue.toString());
+            setFont(theTable.getFont());
+            setForeground(theIsSelected ? theTable.getSelectionForeground()
+                    : theTable.getForeground());
+            setBackground(theIsSelected ? theTable.getSelectionBackground()
+                    : theTable.getBackground());
+            setBorder(BorderFactory.createEmptyBorder(4, 5, 4, 5));
+            return this;
+        }
+    }
+
+    /** Formats decimal numbers in anomaly details to at most two decimal places. */
+    private String formatAnomalyDetails(final String theDetails) {
+        if (theDetails == null || theDetails.isEmpty()) {
+            return theDetails;
+        }
+
+        final Pattern myDecimalPattern = Pattern.compile("(?<![\\w.])-?\\d+\\.\\d+");
+        final Matcher myMatcher = myDecimalPattern.matcher(theDetails);
+        final StringBuffer myFormattedDetails = new StringBuffer();
+        while (myMatcher.find()) {
+            final String myNumber = myMatcher.group();
+            final String myFormattedNumber = new BigDecimal(myNumber)
+                    .setScale(2, RoundingMode.HALF_UP)
+                    .toPlainString();
+            myMatcher.appendReplacement(myFormattedDetails,
+                    Matcher.quoteReplacement(myFormattedNumber));
+        }
+        myMatcher.appendTail(myFormattedDetails);
+        return myFormattedDetails.toString();
     }
 
     /** Adds a visible notification for one anomaly. */
@@ -566,7 +702,19 @@ public class MonitorDashboard extends JFrame {
     public void refreshAnomalyLog(final List<AnomalyRecord> theRecords) {
         final List<AnomalyRecord> myRecordSnapshot = theRecords == null
                 ? new ArrayList<>() : new ArrayList<>(theRecords);
+        if (myMonitoringPaused) {
+            synchronized (myPendingUpdatesLock) {
+                myPendingAnomalies.addAll(myRecordSnapshot);
+            }
+            return;
+        }
         Runnable myUpdate = () -> {
+            if (myMonitoringPaused) {
+                synchronized (myPendingUpdatesLock) {
+                    myPendingAnomalies.addAll(myRecordSnapshot);
+                }
+                return;
+            }
             // Merge incoming records with the existing history instead of
             // clearing the display when the caller supplies only recent data.
             for (AnomalyRecord myRecord : myRecordSnapshot) {
